@@ -8,4 +8,4 @@ Technically, users will be allowed to upscale and interpolate their videos by us
 [WIP]
 
 # Contributor
-[WIP]
+Tremeschin (https://tremeschin.gitlab.io/) (Backend)
