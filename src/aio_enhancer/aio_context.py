@@ -39,6 +39,7 @@
 # ==============================================================================
 
 import logging
+import sys
 import os
 
 
@@ -52,23 +53,51 @@ class AIOPaths:
         sep = os.path.sep
         logging.debug(f"{debug_prefix} OS path separador is [{sep}]")
 
-        # # Paths
+        # # # Paths
 
+
+        # # Hard coded // expected
+
+        # Config directory
+        
         # Where we store data such as configs, gui, profiles
-        self.data_path = f"{self.aio_main.DIR}{sep}data"
-        logging.info(f"{debug_prefix} Data path is [{self.data_path}]")
+        self.config_dir = f"{self.aio_main.DIR}{sep}config"
+        logging.info(f"{debug_prefix} [EXPECTED] Config directory is [{self.config_dir}]")
 
-        # # Files
+        # Error assertion, config dir should exist
+        logging.info(f"{debug_prefix} Checking existing config directory (it should?)")
+        if not os.path.exists(self.config_dir):
+            logging.error(f"{debug_prefix} Config directory [{self.config_dir}] doesn't exists.."); sys.exit(-1)
 
-        # Where we store persistent profile information
-        self.database_file = f"{self.data_path}{sep}database.shelf"
+        # Where we store persistent profile information across runs
+        self.database_file = f"{self.config_dir}{sep}database.shelf"
         logging.info(f"{debug_prefix} Database file is [{self.database_file}]")
 
-        # # Create / check stuff
 
-        logging.info(f"{debug_prefix} Creating data path if it doesn't exist (it should?)")
-        self.aio_main.utils.mkdir_dne(self.data_path)
+        # # User configured paths
 
+        # Load directories.yaml
+        self.config_directories = self.aio_main.utils.load_yaml(f"{self.config_dir}{sep}directories.yaml")
+
+        # # Sessions
+        # Where we store sessions, extract videos and so
+        self.sessions_dir = self.expand_dir(self.config_directories["global"]["sessions_folder"])
+        logging.info(f"{debug_prefix} Sessions directory is [{self.sessions_dir}]")
+
+
+    # On the directories.yaml we refer to the directory of the __init__.py with ~~
+    # and replace / with the according os.path.sep
+    def expand_dir(self, string):
+        replaces =  {
+            "~~": self.aio_main.DIR,
+            "/": os.path.sep,
+        }
+
+        # Replace every key on that replaces dict on the string
+        for key, value in replaces.items():
+            string = string.replace(key, value)
+
+        return string
 
 # Free real state for changing, modifying runtime dependent vars
 # Not really any specification here

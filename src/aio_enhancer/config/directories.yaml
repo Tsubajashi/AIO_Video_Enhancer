@@ -1,0 +1,5 @@
+# Note: directories starting with ~~ will be replaced by the location of the __init__.py file
+# and the / will be replaced by your OS's path separator (/ on *nix and \\ on Windows)
+
+global:
+  sessions_folder: ~~/sessions

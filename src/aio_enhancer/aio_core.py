@@ -44,4 +44,4 @@ class AIOCore:
         self.aio_main = aio_main
 
     def run(self):
-        self.aio_main.misc.thanks_message()
+        self.aio_main.thanks_message()

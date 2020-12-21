@@ -44,6 +44,7 @@ import logging
 import shelve
 import shutil
 import math
+import yaml
 import sys
 import os
 
@@ -51,7 +52,12 @@ import os
 class AIOEnhancerMain:
     def __init__(self):
         debug_prefix = "[AIOEnhancerMain.__init__]"
-        print(debug_prefix, "Hello World!!")
+        self.version = "0.0.1-GUI-BACKEND"
+
+        # Greeter message and version telling
+        self.greeter_message()
+
+        print(debug_prefix, "Hello World!! Need to find the directory we're at and reset the log file before actually logging")
 
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.aio_main.DIR at any depth in the code
@@ -84,17 +90,17 @@ class AIOEnhancerMain:
         logging.basicConfig(
             encoding = 'utf-8',
             level = logging.DEBUG,
-            format = "[%(levelname)-5s] [%(filename)-15s:%(lineno)-3d] %(message)s",
+            format = "[%(levelname)-7s] [%(filename)-15s:%(lineno)-3d] %(message)s",
             handlers = [log_to_file_handler, log_to_stdout_handler],
         )
 
+        print("\n # # [ Start Logging ] # #\n")
+
+        # Log the version we're running
+        logging.warn(f"{debug_prefix} All in One Video Enhancer version [{self.version}]")
+
         # Log where this source file / executable is
         logging.debug(f"{debug_prefix} AIOVE located at: [{self.DIR}], [getattr(sys, 'frozen', True) = {getattr(sys, 'frozen', True)}]")
-
-        # Greeter message and version telling
-        logging.info(f"{debug_prefix} Create Miscellaneous, show greeter message")
-        self.misc = Miscellaneous()
-        self.misc.greeter_message()
 
         # # The operating system we're on, one of "linux", "windows", "macos"
 
@@ -121,8 +127,45 @@ class AIOEnhancerMain:
 
         # Open database across runs, shelve acts like a dictionary as a file
         # it can even save entire objects, in face, any object that python can 
-        # pickle and unpickle.
-        self.database = shelve.open(self.context.paths.database_file)
+        # pickle and unpickle. If it doesn't exist that means we create a new
+        # one with some default configuration
+        os.remove(self.context.paths.database_file) # FIXME: HARD DEBUG
+        existed = os.path.exists(self.context.paths.database_file)
+        self.database = shelve.open(self.context.paths.database_file, "c")  # Open in change mode
+
+        # Is this first time running AIO?
+        logging.info(f"{debug_prefix} Database file existed: [{existed}]")
+
+        # Database file didn't exist, add default configuration
+        if not existed:
+            logging.warn(f"{debug_prefix} Adding default configuration to database file")
+            
+            # Default configuration for AIOVE
+            default_config = {
+                "something": 3,
+                "other": 5,
+                "list": {
+                    "subdir": "that/path",
+                    "asjkd": "those/files",
+                }
+            }
+
+            # Assign every default config key to the shelf database
+            for key, value in default_config.items():
+                self.database[key] = value
+
+        # Hard debug, create a dictionary of the database file and dump to yaml
+        debug_data = yaml.dump(
+            {k: v for k, v in self.database.items()},
+            allow_unicode = True,
+            default_flow_style = False
+        ).split("\n")  # Split into a list of lines so we can visualize better the debug info
+        
+        logging.debug(f"{debug_prefix} [SHELVE] Contents of database file:")
+
+        # Log every line of the database if it's not empty (we should have a trailing char here ie. ignore it)
+        for line in debug_data:
+            if not line == "": logging.debug(f"{debug_prefix} [SHELVE] | {line}")
 
     # Execute AIO main routine
     def run(self):
@@ -130,15 +173,10 @@ class AIOEnhancerMain:
         self.core.run()
 
 
-class Miscellaneous:
-    def __init__(self) -> None:
-        debug_prefix = "[Miscellaneous.__init__]"
+    # # QOL / greeter / thanks messages
 
-        # Log which version we're running
-        self.version = "0.0.1-GUI-BACKEND"
-        logging.debug(f"{debug_prefix} AIOVE Version: [{self.version}]")
 
-    def greeter_message(self) -> None:
+    def greeter_message(self):
 
         self.terminal_width = shutil.get_terminal_size()[0]
 
@@ -173,6 +211,8 @@ f"""
 
     # Print a thanks messages with a few links
     def thanks_message(self):
+
+        self.terminal_width = shutil.get_terminal_size()[0]
 
         bias = " "*(math.floor(self.terminal_width/2) - 45)
 

@@ -37,6 +37,7 @@
 # ==============================================================================
 
 import logging
+import yaml
 import os
 
 
@@ -74,9 +75,10 @@ class Utils:
         return realpath
 
     # Return an absolute path always, substitutes symlinks and so
-    # Preferred functions when dealing with those.
+    # Preferred functions when dealing with those. This function is kinda overkill
+    # but it is kinda very safe, at least verbose enough to catch where stuff is wrong
     def get_realpath_absolute(self, path):
-        debug_prefix = "  [Utils.get_abspath]"
+        debug_prefix = "  [Utils.get_realpath_absolute]"
 
         # Expand user "~" -> /home/$USER
         if (self.os == "linux") and ("~" in path):
@@ -88,7 +90,58 @@ class Utils:
         # this is the absolute path, remember this can be a symlink still!!
         abspath = os.path.abspath(path)
 
+        # Warn the absolute path we got
         logging.info(f"{debug_prefix} Absolute path of [{path}] is [{abspath}]")
 
+        # Get the realpath (if it's a symlink get where it points to)
         return self._get_realpath(abspath)
-    
+
+    # Load a yaml and return its content
+    def load_yaml(self, path):
+        debug_prefix = "  [Utils.load_yaml]"
+        
+        # Info
+        logging.info(f"{debug_prefix} Loading data from yaml [{path}]")
+        
+        # Get absolute and real path always
+        path = self.get_realpath_absolute(path)
+        
+        # Open the file in read mode and get the data dictionary
+        with open(path, "r") as f:
+            data = yaml.load(f, Loader = yaml.FullLoader)
+        
+        # Debug and return the data
+        logging.debug(f"{debug_prefix} Loaded data is {data}")
+        return data
+
+    # Save a dictionary to a YAML file
+    def dump_yaml(self, data, path):
+        debug_prefix = "  [Utils.dump_yaml]"
+        
+        # Debug / info
+        logging.info(f"{debug_prefix} Saving data to yaml file [{path}]")
+        logging.debug(f"{debug_prefix} Saving data to yaml file [{path}], data: {data}")
+
+        # Get absolute and real path always
+        path = self.get_realpath_absolute(path)
+        
+        # Open the file in write mode and overwrite with data dictionary
+        with open(path, "w") as f:
+            yaml.dump(data, f, allow_unicode = True, default_flow_style = False)
+
+    # Remove a suffix from a string
+    def removesuffix(self, string, suffix):
+        debug_prefix = "  [Utils.removesuffix]"
+        logging.debug(f"{debug_prefix} Remove suffix [{suffix}] from string [{string}]")
+
+        # Python 3.9 have a neat removesuffix method that should be more stable
+        if sys.version_info >= (3, 9):
+            done = string.removesuffix(suffix)
+        else:
+            # Manual way of doing it
+            if string.endswith(suffix):
+                done =  string[:-len(suffix)]
+
+        # Debug and return
+        logging.debug(f"{debug_prefix} String without that suffix is [{done}]")
+        return done
