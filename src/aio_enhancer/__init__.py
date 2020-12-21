@@ -51,6 +51,7 @@ class AIOEnhancerMain:
     def __init__(self):
         debug_prefix = "[AIOEnhancerMain.__init__]"
         self.version = "0.0.1-GUI-BACKEND"
+        self.terminal_width = shutil.get_terminal_size()[0]
 
         # Greeter message and version telling
         self.greeter_message()
@@ -84,7 +85,7 @@ class AIOEnhancerMain:
         log_to_file_handler = logging.FileHandler(filename = self.LOG_FILE)
         log_to_stdout_handler = logging.StreamHandler(sys.stdout)
 
-        # Start the logging global class
+        # Start the logging global class, output to file and stdout
         logging.basicConfig(
             encoding = 'utf-8',
             level = logging.DEBUG,
@@ -92,7 +93,8 @@ class AIOEnhancerMain:
             handlers = [log_to_file_handler, log_to_stdout_handler],
         )
 
-        print("\n # # [ Start Logging ] # #\n")
+        # Start logging message
+        bias = " " * ((self.terminal_width//2) - 13); print(f"\n{bias}# # [ Start Logging ] # #\n")
 
         # Log the version we're running
         logging.warn(f"{debug_prefix} All in One Video Enhancer version [{self.version}]")
@@ -125,6 +127,7 @@ class AIOEnhancerMain:
         self.core = AIOCore(self)
 
         # Open persistent database file across runs
+        logging.info(f"{debug_prefix} Opening persistent database")
         self.context.runtime.open_persistent_database()
 
     # Execute AIO main routine

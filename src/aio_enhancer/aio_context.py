@@ -89,7 +89,12 @@ class AIOPaths:
 
     # On the directories.yaml we refer to the directory of the __init__.py with ~~
     # and replace / with the according os.path.sep
-    def expand_dir(self, string):
+    def expand_dir(self, dir_string):
+        debug_prefix = "[AIOPaths.expand_dir]"
+
+        logging.debug(f"{debug_prefix} Expanding path [{dir_string}]")
+
+        # The stuff we'll replace
         replaces =  {
             "~~": self.aio_main.DIR,
             "/": os.path.sep,
@@ -97,9 +102,10 @@ class AIOPaths:
 
         # Replace every key on that replaces dict on the string
         for key, value in replaces.items():
-            string = string.replace(key, value)
+            dir_string = dir_string.replace(key, value)
+            logging.debug(f"{debug_prefix} | Replaced [{key} -> {value}]: Dir is [{dir_string}]")
 
-        return string
+        return dir_string
 
 # Free real state for changing, modifying runtime dependent vars
 # Not really any specification here
