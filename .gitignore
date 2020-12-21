@@ -3,3 +3,13 @@ venvs
 
 # Python __pycache__ files
 **.pyc
+
+# Logs
+*.log
+
+# Common extensions
+*.mkv
+*.mp4
+*.jpg
+*.png
+*.shelf

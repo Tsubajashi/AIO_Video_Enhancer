@@ -38,6 +38,7 @@
 #
 # ==============================================================================
 
+import logging
 import os
 
 
@@ -46,7 +47,7 @@ class AIOPaths:
     def __init__(self, aio_main):
         debug_prefix = "[AIOPaths.__init__]"
         self.aio_main = aio_main
-
+    
         # Path separator, / on unix and \\ on Windows
         sep = os.path.sep
 
@@ -54,17 +55,17 @@ class AIOPaths:
 
         # Where we store data such as configs, gui, profiles
         self.data_path = f"{self.aio_main.DIR}{sep}data"
-        print(debug_prefix, f"Data path is [{self.data_path}]")
+        logging.info(f"{debug_prefix} Data path is [{self.data_path}]")
 
         # # Files
 
         # Where we store persistent profile information
         self.database_file = f"{self.data_path}{sep}database.shelf"
-        print(debug_prefix, f"Database file is [{self.database_file}]")
+        logging.info(f"{debug_prefix} Database file is [{self.database_file}]")
 
         # # Create / check stuff
 
-        print(debug_prefix, "Creating data path if it doesn't exist (it should?)")
+        logging.info(f"{debug_prefix} Creating data path if it doesn't exist (it should?)")
         self.aio_main.utils.mkdir_dne(self.data_path)
 
 
@@ -82,8 +83,8 @@ class AIOContext:
         debug_prefix = "[AIOContext.__init__]"
         self.aio_main = aio_main
         
-        print(debug_prefix, "Creating AIOPaths")
+        logging.info(f"{debug_prefix} Creating AIOPaths")
         self.paths = AIOPaths(self.aio_main)
 
-        print(debug_prefix, "Creating AIORuntime")
+        logging.info(f"{debug_prefix} Creating AIORuntime")
         self.runtime = AIORuntime(self.aio_main)

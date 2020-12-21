@@ -40,6 +40,7 @@
 from aio_enhancer.common.cmn_utils import Utils
 from aio_enhancer.aio_context import AIOContext
 from aio_enhancer.aio_core import AIOCore
+import logging
 import shelve
 import shutil
 import math
@@ -47,14 +48,12 @@ import sys
 import os
 
 
+
+
 class AIOEnhancerMain:
     def __init__(self):
-        debug_prefix = "[AIO_EnhancerMain.__init__]"
+        debug_prefix = "[AIOEnhancerMain.__init__]"
         print(debug_prefix, "Hello World!!")
-
-        # Greeter message and version telling
-        self.misc = Miscellaneous()
-        self.misc.greeter_message()
 
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.aio_main.DIR at any depth in the code
@@ -67,6 +66,32 @@ class AIOEnhancerMain:
             self.DIR = os.path.dirname(os.path.abspath(sys.executable))
             print(debug_prefix, "Running from release (sys.executable..?)")
             print(debug_prefix, f"AIO Enhancer executable located at [{self.DIR}]")
+        
+        # Hard coded where the log file will be located
+        # this is only valid for the last time we run this software
+        self.LOG_FILE = f"{self.DIR}{os.path.sep}log.log"
+
+        # Reset the log file
+        with open(self.LOG_FILE, "w") as f:
+            f.write("")
+
+        # # We can now set up logging as we have where this file is located at
+
+        # Handlers on logging to file and shell output
+        log_to_file_handler = logging.FileHandler(filename = self.LOG_FILE)
+        log_to_stdout_handler = logging.StreamHandler(sys.stdout)
+
+        # Start the logging global class
+        logging.basicConfig(
+            encoding = 'utf-8',
+            level = logging.DEBUG,
+            format = "[%(levelname)s] [%(filename)-15s:%(lineno)-3d] %(message)s",
+            handlers = [log_to_file_handler, log_to_stdout_handler],
+        )
+
+        # Greeter message and version telling
+        self.misc = Miscellaneous()
+        self.misc.greeter_message()
 
         # The operating system we're on, one of "linux", "windows", "macos"
         self.os = {
@@ -75,15 +100,17 @@ class AIOEnhancerMain:
             "darwin": "macos"
         }.get(os.name)
 
+        logging.info(f"{debug_prefix} Running AIO on OS: [{self.os}]")
+
         # # Create classes
 
-        print(debug_prefix, "Creating Utils")
+        logging.info(f"{debug_prefix} Creating Utils")
         self.utils = Utils()
 
-        print(debug_prefix, "Creating AIOContext")
+        logging.info(f"{debug_prefix} Creating AIOContext")
         self.context = AIOContext(self)
 
-        print(debug_prefix, "Creating AIOCore")
+        logging.info(f"{debug_prefix} Creating AIOCore")
         self.core = AIOCore(self)
 
         # Open database across runs, shelve acts like a dictionary as a file
@@ -111,12 +138,12 @@ class Miscellaneous:
             message = \
 f"""{"-"*self.terminal_width}
 {bias}     _     ___  ___    _____         _                                    
-{bias}    / \   |_ _|/ _ \  | ____| _ __  | |__    __ _  _ __    ___  ___  _ __ 
-{bias}   / _ \   | || | | | |  _|  | '_ \ | '_ \  / _` || '_ \  / __|/ _ \| '__|
-{bias}  / ___ \  | || |_| | | |___ | | | || | | || (_| || | | || (__|  __/| |   
-{bias} /_/   \_\|___|\___/  |_____||_| |_||_| |_| \__,_||_| |_| \___|\___||_|
+{bias}    / \\   |_ _|/ _ \\  | ____| _ __  | |__    __ _  _ __    ___  ___  _ __ 
+{bias}   / _ \\   | || | | | |  _|  | '_ \\ | '_ \\  / _` || '_ \\  / __|/ _ \\| '__|
+{bias}  / ___ \\  | || |_| | | |___ | | | || | | || (_| || | | || (__|  __/| |   
+{bias} /_/   \\_\\|___|\\___/  |_____||_| |_||_| |_| \\__,_||_| |_| \\___|\\___||_|
 {bias}
-{bias}                         All in One Enhancer                      
+{bias}                       All in One Video Enhancer                      
 {bias}{(73 - len(version_text))*" "}{version_text}
 {"-"*self.terminal_width}
 """
@@ -143,7 +170,7 @@ f"""
 f"""{"-"*self.terminal_width}\n
 {bias}[+-------------------------------------------------------------------------------------+]
 {bias} |                                                                                     |
-{bias} |           ::    Thanks for using the All in One Enhancer Project!!    ::            |
+{bias} |           :: Thanks for using the All in One Video Enhancer Project!! ::            |
 {bias} |           ==============================================================            |
 {bias} |                                                                                     |
 {bias} | Here's a few official links for AIO Enhancer:                                       |
@@ -156,7 +183,7 @@ f"""{"-"*self.terminal_width}\n
         else:
             message = \
 f"""{"-"*self.terminal_width}\n
-  # # [ Thanks for using the All in One Enhancer Project!! ] # #
+  # # [ Thanks for using the All in One Video Enhancer Project!!! ] # #
 
  Here's a few official links for AIO Enhancer:
   - GitHub Repository: https://github.com/Tsubajashi/AIO_Video_Enhancer

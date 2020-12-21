@@ -36,6 +36,7 @@
 #
 # ==============================================================================
 
+import logging
 import os
 
 
@@ -52,13 +53,13 @@ class Utils:
     def mkdir_dne(self, path):
         debug_prefix = "  [Utils.mkdir_dne]"
 
-        print(debug_prefix, f"Make directory if it doesn't exist [{path}]")
+        logging.info(f"{debug_prefix} Make directory if it doesn't exist [{path}]")
         
         # Always get the absolute path 
         path = self.get_realpath_absolute(path)
 
         # Create the directories
-        print(debug_prefix, f"Create required directories")
+        logging.info(f"{debug_prefix} Create required directories")
         os.makedirs(path, exist_ok=True)
 
     # If a file is a symlink return where it points to
@@ -79,7 +80,7 @@ class Utils:
 
         # Expand user "~" -> /home/$USER
         if (self.os == "linux") and ("~" in path):
-            print(debug_prefix, "[Linux] Expanding path with user home folder ~ to /home/$USER if any")
+            logging.info(f"{debug_prefix} [Linux] Expanding path with user home folder ~ to /home/$USER if any")
             path = os.path.expanduser(path)
        
         # Get the absolute path to a file, that is, if we're on /home/user/
@@ -87,7 +88,7 @@ class Utils:
         # this is the absolute path, remember this can be a symlink still!!
         abspath = os.path.abspath(path)
 
-        print(debug_prefix, f"Absolute path of [{path}] is [{abspath}]")
+        logging.info(f"{debug_prefix} Absolute path of [{path}] is [{abspath}]")
 
         return self._get_realpath(abspath)
     

@@ -32,6 +32,7 @@
 
 import aio_enhancer
 
+# Create main class of AIO
 aio = aio_enhancer.AIOEnhancerMain()
 
 # # Configure stuff (TODO)
