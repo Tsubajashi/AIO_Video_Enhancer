@@ -123,7 +123,7 @@ class AIORuntime:
         # pickle and unpickle. If it doesn't exist that means we create a new
         # one with some default configuration
         existed = os.path.exists(self.aio_main.context.paths.database_file)
-        self.database = shelve.open(self.aio_main.context.paths.database_file, "c")  # Open in change mode
+        self.database = shelve.open(self.aio_main.context.paths.database_file, "c", writeback = True)  # Open in change mode
 
         # Is this first time running AIO?
         logging.info(f"{debug_prefix} Database file existed: [{existed}]")

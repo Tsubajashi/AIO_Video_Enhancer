@@ -135,7 +135,6 @@ class AIOEnhancerMain:
         logging.info(f"[AIOEnhancerMain.run] Executing AIOCore.run()")
         self.core.run()
 
-
     # # QOL / greeter / thanks messages
 
     def greeter_message(self):
