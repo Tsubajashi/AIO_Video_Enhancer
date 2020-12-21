@@ -110,7 +110,7 @@ class AIOPaths:
             dir_string = dir_string.replace(key, value)
             logging.debug(f"{debug_prefix} | Replaced [{key} -> {value}]: Dir is [{dir_string}]")
 
-        return dir_string
+        return self.aio_main.utils.get_realpath_absolute(dir_string)
 
 # Free real state for changing, modifying runtime dependent vars
 # Not really any specification here
