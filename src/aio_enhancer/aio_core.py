@@ -39,7 +39,7 @@
 
 # Manage and store where directories should be
 class AIOCore:
-    def __init__(self, aio_main):
+    def __init__(self, aio_main, depth):
         debug_prefix = "[AIOCore.__init__]"
         self.aio_main = aio_main
 

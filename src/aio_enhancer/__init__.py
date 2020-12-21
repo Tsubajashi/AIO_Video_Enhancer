@@ -49,7 +49,7 @@ import os
 
 
 class AIOEnhancerMain:
-    def __init__(self):
+    def __init__(self, depth = ""):
         debug_prefix = "[AIOEnhancerMain.__init__]"
         self.version = "0.0.1-GUI-BACKEND"
         self.terminal_width = shutil.get_terminal_size()[0]
@@ -77,7 +77,7 @@ class AIOEnhancerMain:
 
         # Reset the log file
         with open(self.LOG_FILE, "w") as f:
-            print(f"{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
+            print(f"{depth}{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
             f.write("")
 
         # # We can now set up logging as we have where this file is located at
@@ -98,10 +98,10 @@ class AIOEnhancerMain:
         bias = " " * ((self.terminal_width//2) - 13); print(f"\n{bias}# # [ Start Logging ] # #\n")
 
         # Log the version we're running
-        logging.warn(f"{debug_prefix} All in One Video Enhancer version [{self.version}]")
+        logging.warn(f"{depth}{debug_prefix} All in One Video Enhancer version [{self.version}]")
 
         # Log where this source file / executable is
-        logging.debug(f"{debug_prefix} AIOVE located at: [{self.DIR}], [getattr(sys, 'frozen', True) = {getattr(sys, 'frozen', True)}]")
+        logging.debug(f"{depth}{debug_prefix} AIOVE located at: [{self.DIR}], [getattr(sys, 'frozen', True) = {getattr(sys, 'frozen', True)}]")
 
         # # The operating system we're on, one of "linux", "windows", "macos"
 
@@ -113,32 +113,32 @@ class AIOEnhancerMain:
         }.get(os.name)
 
         # Log which OS we're runnig
-        logging.info(f"{debug_prefix} Running All in Onne Video Enhancer on OS: [{self.os}]")
+        logging.info(f"{depth}{debug_prefix} Running All in Onne Video Enhancer on OS: [{self.os}]")
 
         # # Create classes
 
-        logging.info(f"{debug_prefix} Creating Utils")
+        logging.info(f"{depth}{debug_prefix} Creating Utils")
         self.utils = Utils()
 
         # Runtime / configs / communicator across files
-        logging.info(f"{debug_prefix} Creating AIOContext")
-        self.context = AIOContext(self)
+        logging.info(f"{depth}{debug_prefix} Creating AIOContext")
+        self.context = AIOContext(self, depth + "| ")
 
         # Video wrapper around FFmpeg, FFprobe
-        logging.info(f"{debug_prefix} Creating AIOVideo")
-        self.video = AIOVideo(self)
+        logging.info(f"{depth}{debug_prefix} Creating AIOVideo")
+        self.video = AIOVideo(self, depth + "| ")
 
         # Main routines
-        logging.info(f"{debug_prefix} Creating AIOCore")
-        self.core = AIOCore(self)
+        logging.info(f"{depth}{debug_prefix} Creating AIOCore")
+        self.core = AIOCore(self, depth + "| ")
 
         # Open persistent database file across runs
-        logging.info(f"{debug_prefix} Opening persistent database")
-        self.context.runtime.open_persistent_database()
+        logging.info(f"{depth}{debug_prefix} Opening persistent database")
+        self.context.runtime.open_persistent_database(depth + "| ")
 
     # Execute AIO main routine
-    def run(self):
-        logging.info(f"[AIOEnhancerMain.run] Executing AIOCore.run()")
+    def run(self, depth):
+        logging.info(f"{depth}[AIOEnhancerMain.run] Executing AIOCore.run()")
         self.core.run()
 
     # # QOL / greeter / thanks messages

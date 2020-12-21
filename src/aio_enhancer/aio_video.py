@@ -40,7 +40,7 @@ import logging
 
 
 class AIOVideo:
-    def __init__(self, aio_main):
+    def __init__(self, aio_main, depth):
         debug_prefix = "[AIOCore.__init__]"
         self.aio_main = aio_main
 
@@ -48,34 +48,34 @@ class AIOVideo:
 
         # # FFmpeg
 
-        logging.info(f"{debug_prefix} Getting FFmpeg binary, also searching on externals dir")
+        logging.info(f"{depth}{debug_prefix} Getting FFmpeg binary, also searching on externals dir")
         self.ffmpeg_bin = self.aio_main.utils.get_executable_with_name(
-            "ffmpeg", extra_paths = self.aio_main.context.paths.externals_dir
+            "ffmpeg", depth + "| ", extra_paths = self.aio_main.context.paths.externals_dir
         )
 
         # That function returns None if none was found, this is an error and we can't continue
         if self.ffmpeg_bin is None:
             err = "No FFmpeg binary was found, we can't continue"
-            logging.error(f"{debug_prefix} {err}")
+            logging.error(f"{depth}{debug_prefix} {err}")
             raise RuntimeError(err)
 
-        logging.info(f"{debug_prefix} FFmpeg binary found at [{self.ffmpeg_bin}]")
+        logging.info(f"{depth}{debug_prefix} FFmpeg binary found at [{self.ffmpeg_bin}]")
 
 
         # # FFprobe
         
-        logging.info(f"{debug_prefix} Getting FFprobe binary, also searching on externals dir")
+        logging.info(f"{depth}{debug_prefix} Getting FFprobe binary, also searching on externals dir")
         self.ffprobe_bin = self.aio_main.utils.get_executable_with_name(
-            "ffprobe", extra_paths = self.aio_main.context.paths.externals_dir
+            "ffprobe", depth + "| ", extra_paths = self.aio_main.context.paths.externals_dir
         )
 
         # That function returns None if none was found, this is an error and we can't continue
         if self.ffprobe_bin is None:
             err = "No FFprobe binary was found, we can't continue"
-            logging.error(f"{debug_prefix} {err}")
+            logging.error(f"{depth}{debug_prefix} {err}")
             raise RuntimeError(err)
 
-        logging.info(f"{debug_prefix} FFprobe binary found at [{self.ffprobe_bin}]")
+        logging.info(f"{depth}{debug_prefix} FFprobe binary found at [{self.ffprobe_bin}]")
 
 
 

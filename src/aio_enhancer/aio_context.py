@@ -47,13 +47,13 @@ import os
 
 # Manage and store where directories should be
 class AIOPaths:
-    def __init__(self, aio_main):
+    def __init__(self, aio_main, depth):
         debug_prefix = "[AIOPaths.__init__]"
         self.aio_main = aio_main
     
         # Path separator, / on unix and \\ on Windows
         sep = os.path.sep
-        logging.debug(f"{debug_prefix} OS path separador is [{sep}]")
+        logging.debug(f"{depth}{debug_prefix} OS path separador is [{sep}]")
 
         # # # Paths
 
@@ -64,40 +64,40 @@ class AIOPaths:
         
         # Where we store data such as configs, gui, profiles
         self.config_dir = f"{self.aio_main.DIR}{sep}config"
-        logging.info(f"{debug_prefix} [EXPECTED] Config directory is [{self.config_dir}]")
+        logging.info(f"{depth}{debug_prefix} [EXPECTED] Config directory is [{self.config_dir}]")
 
         # Error assertion, config dir should exist
-        logging.info(f"{debug_prefix} Checking existing config directory (it should?)")
+        logging.info(f"{depth}{debug_prefix} Checking existing config directory (it should?)")
         if not os.path.exists(self.config_dir):
-            logging.error(f"{debug_prefix} Config directory [{self.config_dir}] doesn't exists.."); sys.exit(-1)
+            logging.error(f"{depth}{debug_prefix} Config directory [{self.config_dir}] doesn't exists.."); sys.exit(-1)
 
         # Where we store persistent profile information across runs
         self.database_file = f"{self.config_dir}{sep}database.shelf"
-        logging.info(f"{debug_prefix} Database file is [{self.database_file}]")
+        logging.info(f"{depth}{debug_prefix} Database file is [{self.database_file}]")
 
 
-        # # User configured paths
+        # # User configured paths, get, log and make directory if it doesn't exist
 
         # Load directories.yaml
-        self.config_directories = self.aio_main.utils.load_yaml(f"{self.config_dir}{sep}directories.yaml")
+        self.config_directories = self.aio_main.utils.load_yaml(f"{self.config_dir}{sep}directories.yaml", depth + "| ")
 
         # # Sessions
         # Where we store sessions, extract videos and so
-        self.sessions_dir = self.expand_dir(self.config_directories["global"]["sessions_folder"])
-        logging.info(f"{debug_prefix} Sessions directory is [{self.sessions_dir}], making directory if doesn't exist")
-        self.aio_main.utils.mkdir_dne(self.sessions_dir)
+        self.sessions_dir = self.expand_dir(self.config_directories["global"]["sessions_folder"], depth + "| ")
+        logging.info(f"{depth}{debug_prefix} Sessions directory is [{self.sessions_dir}], making directory if doesn't exist")
+        self.aio_main.utils.mkdir_dne(self.sessions_dir, depth + "| ")
 
-        self.externals_dir = self.expand_dir(self.config_directories["global"]["externals_folder"])
-        logging.info(f"{debug_prefix} Externals directory is [{self.externals_dir}], making directory if doesn't exist")
-        self.aio_main.utils.mkdir_dne(self.externals_dir)
+        self.externals_dir = self.expand_dir(self.config_directories["global"]["externals_folder"], depth + "| ")
+        logging.info(f"{depth}{debug_prefix} Externals directory is [{self.externals_dir}], making directory if doesn't exist")
+        self.aio_main.utils.mkdir_dne(self.externals_dir, depth + "| ")
 
 
     # On the directories.yaml we refer to the directory of the __init__.py with ~~
     # and replace / with the according os.path.sep
-    def expand_dir(self, dir_string):
+    def expand_dir(self, dir_string, depth):
         debug_prefix = "[AIOPaths.expand_dir]"
 
-        logging.debug(f"{debug_prefix} Expanding path [{dir_string}]")
+        logging.debug(f"{depth}{debug_prefix} Expanding path [{dir_string}]")
 
         # The stuff we'll replace
         replaces =  {
@@ -108,19 +108,19 @@ class AIOPaths:
         # Replace every key on that replaces dict on the string
         for key, value in replaces.items():
             dir_string = dir_string.replace(key, value)
-            logging.debug(f"{debug_prefix} | Replaced [{key} -> {value}]: Dir is [{dir_string}]")
+            logging.debug(f"{depth}{debug_prefix} | Replaced [{key} -> {value}]: Dir is [{dir_string}]")
 
-        return self.aio_main.utils.get_realpath_absolute(dir_string)
+        return self.aio_main.utils.get_realpath_absolute(dir_string, depth + "| ")
 
 # Free real state for changing, modifying runtime dependent vars
 # Not really any specification here
 class AIORuntime:
-    def __init__(self, aio_main):
+    def __init__(self, aio_main, depth):
         debug_prefix = "[AIORuntime.__init__]"
         self.aio_main = aio_main
 
     # Persistent database file across runs with GUI default configs, settings
-    def open_persistent_database(self):
+    def open_persistent_database(self, depth):
         debug_prefix = "[AIORuntime.open_persistent_database]"
 
         # Open database across runs, shelve acts like a dictionary as a file
@@ -131,19 +131,16 @@ class AIORuntime:
         self.database = shelve.open(self.aio_main.context.paths.database_file, "c", writeback = True)  # Open in change mode
 
         # Is this first time running AIO?
-        logging.info(f"{debug_prefix} Database file existed: [{existed}]")
+        logging.info(f"{depth}{debug_prefix} Database file existed: [{existed}]")
 
         # Database file didn't exist, add default configuration
         if not existed:
-            logging.warn(f"{debug_prefix} Adding default configuration to database file")
+            logging.warn(f"{depth}{debug_prefix} Adding default configuration to database file")
             
             # Default configuration for AIOVE
             default_config = {
-                "something": 3,
-                "other": 5,
-                "list": {
-                    "subdir": "that/path",
-                    "asjkd": "those/files",
+                "dearpygui": {
+                    "theme": "dark",
                 }
             }
 
@@ -158,21 +155,21 @@ class AIORuntime:
             default_flow_style = False
         ).split("\n")  # Split into a list of lines so we can visualize better the debug info
         
-        logging.debug(f"{debug_prefix} [SHELVE] Contents of database file:")
+        logging.debug(f"{depth}{debug_prefix} [SHELVE] Contents of database file:")
 
         # Log every line of the database if it's not empty (we should have a trailing char here ie. ignore it)
         for line in debug_data:
-            if not line == "": logging.debug(f"{debug_prefix} [SHELVE] | {line}")
+            if not line == "": logging.debug(f"{depth}{debug_prefix} [SHELVE] | {line}")
 
 
 # Context vars (configured stuff)
 class AIOContext:
-    def __init__(self, aio_main):
+    def __init__(self, aio_main, depth):
         debug_prefix = "[AIOContext.__init__]"
         self.aio_main = aio_main
         
-        logging.info(f"{debug_prefix} Creating AIOPaths")
-        self.paths = AIOPaths(self.aio_main)
+        logging.info(f"{depth}{debug_prefix} Creating AIOPaths")
+        self.paths = AIOPaths(self.aio_main, depth + "| ")
 
-        logging.info(f"{debug_prefix} Creating AIORuntime")
-        self.runtime = AIORuntime(self.aio_main)
+        logging.info(f"{depth}{debug_prefix} Creating AIORuntime")
+        self.runtime = AIORuntime(self.aio_main, depth + "| ")
