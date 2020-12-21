@@ -41,10 +41,8 @@ from aio_enhancer.common.cmn_utils import Utils
 from aio_enhancer.aio_context import AIOContext
 from aio_enhancer.aio_core import AIOCore
 import logging
-import shelve
 import shutil
 import math
-import yaml
 import sys
 import os
 
@@ -119,53 +117,15 @@ class AIOEnhancerMain:
         logging.info(f"{debug_prefix} Creating Utils")
         self.utils = Utils()
 
+        # Runtime / configs / communicator across files
         logging.info(f"{debug_prefix} Creating AIOContext")
         self.context = AIOContext(self)
 
         logging.info(f"{debug_prefix} Creating AIOCore")
         self.core = AIOCore(self)
 
-        # Open database across runs, shelve acts like a dictionary as a file
-        # it can even save entire objects, in face, any object that python can 
-        # pickle and unpickle. If it doesn't exist that means we create a new
-        # one with some default configuration
-        os.remove(self.context.paths.database_file) # FIXME: HARD DEBUG
-        existed = os.path.exists(self.context.paths.database_file)
-        self.database = shelve.open(self.context.paths.database_file, "c")  # Open in change mode
-
-        # Is this first time running AIO?
-        logging.info(f"{debug_prefix} Database file existed: [{existed}]")
-
-        # Database file didn't exist, add default configuration
-        if not existed:
-            logging.warn(f"{debug_prefix} Adding default configuration to database file")
-            
-            # Default configuration for AIOVE
-            default_config = {
-                "something": 3,
-                "other": 5,
-                "list": {
-                    "subdir": "that/path",
-                    "asjkd": "those/files",
-                }
-            }
-
-            # Assign every default config key to the shelf database
-            for key, value in default_config.items():
-                self.database[key] = value
-
-        # Hard debug, create a dictionary of the database file and dump to yaml
-        debug_data = yaml.dump(
-            {k: v for k, v in self.database.items()},
-            allow_unicode = True,
-            default_flow_style = False
-        ).split("\n")  # Split into a list of lines so we can visualize better the debug info
-        
-        logging.debug(f"{debug_prefix} [SHELVE] Contents of database file:")
-
-        # Log every line of the database if it's not empty (we should have a trailing char here ie. ignore it)
-        for line in debug_data:
-            if not line == "": logging.debug(f"{debug_prefix} [SHELVE] | {line}")
+        # Open persistent database file across runs
+        self.context.runtime.open_persistent_database()
 
     # Execute AIO main routine
     def run(self):
@@ -174,7 +134,6 @@ class AIOEnhancerMain:
 
 
     # # QOL / greeter / thanks messages
-
 
     def greeter_message(self):
 
