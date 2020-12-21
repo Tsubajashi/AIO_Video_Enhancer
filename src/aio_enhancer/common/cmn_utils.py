@@ -147,22 +147,27 @@ class Utils:
         logging.debug(f"{debug_prefix} String without that suffix is [{done}]")
         return done
 
-    # Get a executable from path, returns False if it doesn't exist
+    # Get a executable from path, returns None if it doesn't exist
     # Don't append the .exe for Windows, there is fail safe mechanism
     def get_executable_with_name(self, binary, extra_paths = []):
+        debug_prefix = "  [Utils.get_executable_with_name]"
 
+        # Force list and joing with this OS's pathsep "operator"
+        extra_paths = self.force_list(extra_paths)
+        extra_paths = os.pathsep.join(extra_paths)
+
+        logging.debug(f"{debug_prefix} Getting executable with name [{binary}], also searching extra paths: [{extra_paths}]")
         assert (not binary.endswith(".exe")), "Don't append .exe when searching for binaries, this function already does that!"
 
         # Force list variable
-        extra_paths = self.force_list(extra_paths)
-        search_path = os.environ["PATH"] + os.pathsep + os.pathsep.join(extra_paths)
+        search_path = os.environ["PATH"] + os.pathsep + extra_paths
 
         # Locate it
         locate = shutil.which(binary, path = search_path)
 
-        # If it's not found then return False
+        # If it's not found then return None
         if locate is None:
-            return False
+            return None
             
         # Else return its path
         return locate
