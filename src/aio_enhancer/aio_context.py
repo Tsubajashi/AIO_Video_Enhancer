@@ -50,6 +50,7 @@ class AIOPaths:
     
         # Path separator, / on unix and \\ on Windows
         sep = os.path.sep
+        logging.debug(f"{debug_prefix} OS path separador is [{sep}]")
 
         # # Paths
 

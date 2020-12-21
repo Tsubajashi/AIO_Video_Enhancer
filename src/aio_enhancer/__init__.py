@@ -48,8 +48,6 @@ import sys
 import os
 
 
-
-
 class AIOEnhancerMain:
     def __init__(self):
         debug_prefix = "[AIOEnhancerMain.__init__]"
@@ -73,6 +71,7 @@ class AIOEnhancerMain:
 
         # Reset the log file
         with open(self.LOG_FILE, "w") as f:
+            print(f"{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
             f.write("")
 
         # # We can now set up logging as we have where this file is located at
@@ -85,22 +84,29 @@ class AIOEnhancerMain:
         logging.basicConfig(
             encoding = 'utf-8',
             level = logging.DEBUG,
-            format = "[%(levelname)s] [%(filename)-15s:%(lineno)-3d] %(message)s",
+            format = "[%(levelname)-5s] [%(filename)-15s:%(lineno)-3d] %(message)s",
             handlers = [log_to_file_handler, log_to_stdout_handler],
         )
 
+        # Log where this source file / executable is
+        logging.debug(f"{debug_prefix} AIOVE located at: [{self.DIR}], [getattr(sys, 'frozen', True) = {getattr(sys, 'frozen', True)}]")
+
         # Greeter message and version telling
+        logging.info(f"{debug_prefix} Create Miscellaneous, show greeter message")
         self.misc = Miscellaneous()
         self.misc.greeter_message()
 
-        # The operating system we're on, one of "linux", "windows", "macos"
+        # # The operating system we're on, one of "linux", "windows", "macos"
+
+        # Get the desired name from a dict matching against os.name
         self.os = {
             "posix": "linux",
             "nt": "windows",
             "darwin": "macos"
         }.get(os.name)
 
-        logging.info(f"{debug_prefix} Running AIO on OS: [{self.os}]")
+        # Log which OS we're runnig
+        logging.info(f"{debug_prefix} Running All in Onne Video Enhancer on OS: [{self.os}]")
 
         # # Create classes
 
@@ -120,12 +126,17 @@ class AIOEnhancerMain:
 
     # Execute AIO main routine
     def run(self):
+        logging.info(f"[AIOEnhancerMain.run] Executing AIOCore.run()")
         self.core.run()
 
 
 class Miscellaneous:
     def __init__(self) -> None:
+        debug_prefix = "[Miscellaneous.__init__]"
+
+        # Log which version we're running
         self.version = "0.0.1-GUI-BACKEND"
+        logging.debug(f"{debug_prefix} AIOVE Version: [{self.version}]")
 
     def greeter_message(self) -> None:
 
@@ -167,7 +178,7 @@ f"""
 
         if self.terminal_width >= 90:
             message = \
-f"""{"-"*self.terminal_width}\n
+f"""\n{"-"*self.terminal_width}\n
 {bias}[+-------------------------------------------------------------------------------------+]
 {bias} |                                                                                     |
 {bias} |           :: Thanks for using the All in One Video Enhancer Project!! ::            |
