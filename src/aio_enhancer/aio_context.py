@@ -84,7 +84,12 @@ class AIOPaths:
         # # Sessions
         # Where we store sessions, extract videos and so
         self.sessions_dir = self.expand_dir(self.config_directories["global"]["sessions_folder"])
-        logging.info(f"{debug_prefix} Sessions directory is [{self.sessions_dir}]")
+        logging.info(f"{debug_prefix} Sessions directory is [{self.sessions_dir}], making directory if doesn't exist")
+        self.aio_main.utils.mkdir_dne(self.sessions_dir)
+
+        self.externals_dir = self.expand_dir(self.config_directories["global"]["externals_folder"])
+        logging.info(f"{debug_prefix} Externals directory is [{self.externals_dir}], making directory if doesn't exist")
+        self.aio_main.utils.mkdir_dne(self.externals_dir)
 
 
     # On the directories.yaml we refer to the directory of the __init__.py with ~~

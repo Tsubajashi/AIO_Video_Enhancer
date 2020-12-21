@@ -37,6 +37,7 @@
 # ==============================================================================
 
 import logging
+import shutil
 import yaml
 import os
 
@@ -145,3 +146,29 @@ class Utils:
         # Debug and return
         logging.debug(f"{debug_prefix} String without that suffix is [{done}]")
         return done
+
+    # Get a executable from path, returns False if it doesn't exist
+    # Don't append the .exe for Windows, there is fail safe mechanism
+    def get_executable_with_name(self, binary, extra_paths = []):
+
+        assert (not binary.endswith(".exe")), "Don't append .exe when searching for binaries, this function already does that!"
+
+        # Force list variable
+        extra_paths = self.force_list(extra_paths)
+        search_path = os.environ["PATH"] + os.pathsep + os.pathsep.join(extra_paths)
+
+        # Locate it
+        locate = shutil.which(binary, path = search_path)
+
+        # If it's not found then return False
+        if locate is None:
+            return False
+            
+        # Else return its path
+        return locate
+    
+    # If data is string, "abc" -> ["abc"], if data is list, return data
+    def force_list(self, data):
+        if not isinstance(data, list):
+            data = [data]
+        return data

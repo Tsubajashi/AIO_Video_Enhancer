@@ -3,3 +3,4 @@
 
 global:
   sessions_folder: ~~/sessions
+  externals_folder: ~~/externals

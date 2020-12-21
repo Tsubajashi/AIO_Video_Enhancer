@@ -39,6 +39,7 @@
 
 from aio_enhancer.common.cmn_utils import Utils
 from aio_enhancer.aio_context import AIOContext
+from aio_enhancer.aio_video import AIOVideo
 from aio_enhancer.aio_core import AIOCore
 import logging
 import shutil
@@ -123,6 +124,11 @@ class AIOEnhancerMain:
         logging.info(f"{debug_prefix} Creating AIOContext")
         self.context = AIOContext(self)
 
+        # Video wrapper around FFmpeg, FFprobe
+        logging.info(f"{debug_prefix} Creating AIOVideo")
+        self.video = AIOVideo(self)
+
+        # Main routines
         logging.info(f"{debug_prefix} Creating AIOCore")
         self.core = AIOCore(self)
 
