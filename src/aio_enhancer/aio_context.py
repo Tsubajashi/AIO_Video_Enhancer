@@ -136,6 +136,7 @@ class AIORuntime:
                 "last_profile": "anime",
                 "input_video": "",
                 "output_video": "",
+                "theme": "Dark",
             }
 
             self.save_current_runtime(depth + "| ")
