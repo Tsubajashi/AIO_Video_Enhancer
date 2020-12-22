@@ -54,7 +54,7 @@ from dearpygui.simple import *
 set_theme(runtime_dict.get("theme", "dark"))
 
 set_style_antialiased_lines(True)
-set_main_window_size(1000, 500)
+set_main_window_size(1015, 540)
 set_style_window_rounding(0)
 depth = ">"
 

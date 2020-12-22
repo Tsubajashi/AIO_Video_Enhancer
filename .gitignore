@@ -16,3 +16,6 @@ venvs
 
 # Runtime files
 src/aio_enhancer/data/runtime.yaml
+
+# externals folder
+src/aio_enhancer/externals
