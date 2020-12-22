@@ -54,7 +54,15 @@ from dearpygui.simple import *
 set_theme(runtime_dict.get("theme", "dark"))
 
 set_style_antialiased_lines(True)
-set_main_window_size(1015, 540)
+
+# dearpygui on Windows considers the title bar within the limits
+# of the target window size..? workaround is to create a tiny bit
+# larger window size on Windows OS that matches what we expect
+if aio.os == "windows":
+    set_main_window_size(1015, 540)
+else:
+    set_main_window_size(1000, 500)
+
 set_style_window_rounding(0)
 depth = ">"
 
@@ -102,9 +110,9 @@ def menuitem(sender, data):
     if sender == "Project Repository":
         aio.utils.open_url("https://github.com/tsubajashi/aio_video_enhancer", depth)
     elif sender == "Contributors":
-        aio.utils.open_url("https://github.com/Tsubajashi/AIO_Video_Enhancer/graphs/contributors")
+        aio.utils.open_url("https://github.com/Tsubajashi/AIO_Video_Enhancer/graphs/contributors", depth)
     elif sender == "Documentation":
-        aio.utils.open_url("https://github.com/Tsubajashi/AIO_Video_Enhancer/wiki")
+        aio.utils.open_url("https://github.com/Tsubajashi/AIO_Video_Enhancer/wiki", depth)
 
     
 with window(
