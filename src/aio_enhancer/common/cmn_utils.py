@@ -79,12 +79,13 @@ class Utils:
     # Return an absolute path always, substitutes symlinks and so
     # Preferred functions when dealing with those. This function is kinda overkill
     # but it is kinda very safe, at least verbose enough to catch where stuff is wrong
-    def get_realpath_absolute(self, path, depth):
+    def get_realpath_absolute(self, path, depth, silent = False):
         debug_prefix = "[Utils.get_realpath_absolute]"
 
         # Expand user "~" -> /home/$USER
         if (self.os == "linux") and ("~" in path):
-            logging.info(f"{depth}{debug_prefix} [Linux] Expanding path with user home folder ~ to /home/$USER if any")
+            if not silent:
+                logging.info(f"{depth}{debug_prefix} [Linux] Expanding path with user home folder ~ to /home/$USER if any")
             path = os.path.expanduser(path)
        
         # Get the absolute path to a file, that is, if we're on /home/user/
@@ -93,7 +94,8 @@ class Utils:
         abspath = os.path.abspath(path)
 
         # Warn the absolute path we got
-        logging.info(f"{depth}{debug_prefix} Absolute path of [{path}] is [{abspath}]")
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Absolute path of [{path}] is [{abspath}]")
 
         # Get the realpath (if it's a symlink get where it points to)
         return self._get_realpath(abspath)
@@ -117,15 +119,16 @@ class Utils:
         return data
 
     # Save a dictionary to a YAML file
-    def dump_yaml(self, data, path, depth):
+    def dump_yaml(self, data, path, depth, silent = False):
         debug_prefix = "[Utils.dump_yaml]"
         
         # Debug / info
-        logging.info(f"{depth}{debug_prefix} Saving data to yaml file [{path}]")
-        logging.debug(f"{depth}{debug_prefix} Saving data to yaml file [{path}], data: {data}")
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Saving data to yaml file [{path}]")
+            logging.debug(f"{depth}{debug_prefix} Saving data to yaml file [{path}], data: {data}")
 
         # Get absolute and real path always
-        path = self.get_realpath_absolute(path, depth + "| ")
+        path = self.get_realpath_absolute(path, depth + "| ", silent = silent)
         
         # Open the file in write mode and overwrite with data dictionary
         with open(path, "w") as f:

@@ -55,41 +55,41 @@ class AIOPaths:
         sep = os.path.sep
         logging.debug(f"{depth}{debug_prefix} OS path separador is [{sep}]")
 
-        # # # Paths
+        # # # Directories
 
-
-        # # Hard coded // expected
-
-        # Config directory
-        
         # Where we store data such as configs, gui, profiles
-        self.config_dir = f"{self.aio_main.DIR}{sep}config"
-        logging.info(f"{depth}{debug_prefix} [EXPECTED] Config directory is [{self.config_dir}]")
+        self.data_dir = f"{self.aio_main.DIR}{sep}data"
+        logging.info(f"{depth}{debug_prefix} (expect) Data directory is [{self.data_dir}]")
 
-        # Error assertion, config dir should exist
-        logging.info(f"{depth}{debug_prefix} Checking existing config directory (it should?)")
-        if not os.path.exists(self.config_dir):
-            logging.error(f"{depth}{debug_prefix} Config directory [{self.config_dir}] doesn't exists.."); sys.exit(-1)
+        # External stuff like ffmpeg, ffprobe
+        self.externals_dir = f"{self.aio_main.DIR}{sep}externals"
+        logging.info(f"{depth}{debug_prefix} (expect) Externals directory is [{self.externals_dir}]")
 
-        # Where we store persistent profile information across runs
-        self.database_file = f"{self.config_dir}{sep}database.shelf"
-        logging.info(f"{depth}{debug_prefix} Database file is [{self.database_file}]")
+        # # Static // expected paths on the data directory
 
+        self.profiles_dir = f"{self.data_dir}{sep}profiles"
+        logging.info(f"{depth}{debug_prefix} (expect) Profiles directory is [{self.profiles_dir}]")
+        
+        self.config_dir = f"{self.data_dir}{sep}config"
+        logging.info(f"{depth}{debug_prefix} (expect) Config directory is [{self.config_dir}]")
 
-        # # User configured paths, get, log and make directory if it doesn't exist
+        self.defaults_dir = f"{self.data_dir}{sep}defaults"
+        logging.info(f"{depth}{debug_prefix} (expect) Defaults directory is [{self.defaults_dir}]")
 
+        # # # Files
+
+        # # Static // expected file paths
+
+        self.runtime_file = f"{self.data_dir}{sep}runtime.yaml"
+
+        # # User configured directories
+        
         # Load directories.yaml
-        self.config_directories = self.aio_main.utils.load_yaml(f"{self.config_dir}{sep}directories.yaml", depth + "| ")
+        self.data_directories = self.aio_main.utils.load_yaml(f"{self.data_dir}{sep}config{sep}directories.yaml", depth + "| ")
 
-        # # Sessions
-        # Where we store sessions, extract videos and so
-        self.sessions_dir = self.expand_dir(self.config_directories["global"]["sessions_folder"], depth + "| ")
-        logging.info(f"{depth}{debug_prefix} Sessions directory is [{self.sessions_dir}], making directory if doesn't exist")
-        self.aio_main.utils.mkdir_dne(self.sessions_dir, depth + "| ")
-
-        self.externals_dir = self.expand_dir(self.config_directories["global"]["externals_folder"], depth + "| ")
-        logging.info(f"{depth}{debug_prefix} Externals directory is [{self.externals_dir}], making directory if doesn't exist")
-        self.aio_main.utils.mkdir_dne(self.externals_dir, depth + "| ")
+        # Sessions directory set by the user
+        self.sessions_dir = self.expand_dir(self.data_directories["global"]["sessions_folder"], depth + "| ")
+        logging.info(f"{depth}{debug_prefix} Sessions directory is [{self.sessions_dir}]")
 
 
     # On the directories.yaml we refer to the directory of the __init__.py with ~~
@@ -115,52 +115,63 @@ class AIOPaths:
 # Free real state for changing, modifying runtime dependent vars
 # Not really any specification here
 class AIORuntime:
-    def __init__(self, aio_main, depth):
+    def __init__(self, aio_main):
         debug_prefix = "[AIORuntime.__init__]"
         self.aio_main = aio_main
 
-    # Persistent database file across runs with GUI default configs, settings
-    def open_persistent_database(self, depth):
-        debug_prefix = "[AIORuntime.open_persistent_database]"
+    # # Runtime
 
-        # Open database across runs, shelve acts like a dictionary as a file
-        # it can even save entire objects, in face, any object that python can 
-        # pickle and unpickle. If it doesn't exist that means we create a new
-        # one with some default configuration
-        existed = os.path.exists(self.aio_main.context.paths.database_file)
-        self.database = shelve.open(self.aio_main.context.paths.database_file, "c", writeback = True)  # Open in change mode
+    # Load the runtime file (saves last profile, last input / output video configured)
+    # Returns False if no file existed before, True if it existed
+    def load_runtime(self, depth):
+        debug_prefix = "[AIORuntime.load_runtime]"
 
-        # Is this first time running AIO?
-        logging.info(f"{depth}{debug_prefix} Database file existed: [{existed}]")
-
-        # Database file didn't exist, add default configuration
+        # Did the runtime.yaml file exist? if not create the default and needed values
+        existed = os.path.exists(self.aio_main.context.paths.runtime_file)
+        
         if not existed:
-            logging.warn(f"{depth}{debug_prefix} Adding default configuration to database file")
-            
-            # Default configuration for AIOVE
-            default_config = {
-                "dearpygui": {
-                    "theme": "dark",
-                }
+            logging.info(f"{depth}{debug_prefix} Runtime file didn't exist (first time running program?), dumping default configs")
+
+            self.runtime_dict = {
+                "last_profile": "anime",
+                "input_video": "",
+                "output_video": "",
             }
 
-            # Assign every default config key to the shelf database
-            for key, value in default_config.items():
-                self.database[key] = value
+            self.save_current_runtime(depth + "| ")
+        else:
+            self.runtime_dict = self.aio_main.utils.load_yaml(self.aio_main.context.paths.runtime_file, depth + "| ")
 
-        # Hard debug, create a dictionary of the database file and dump to yaml
-        debug_data = yaml.dump(
-            {k: v for k, v in self.database.items()},
-            allow_unicode = True,
-            default_flow_style = False
-        ).split("\n")  # Split into a list of lines so we can visualize better the debug info
-        
-        logging.debug(f"{depth}{debug_prefix} [SHELVE] Contents of database file:")
+        logging.info(f"{depth}{debug_prefix} Loaded runtime.yaml, here's the values we got:")
 
-        # Log every line of the database if it's not empty (we should have a trailing char here ie. ignore it)
-        for line in debug_data:
-            if not line == "": logging.debug(f"{depth}{debug_prefix} [SHELVE] | {line}")
+        for key, value in self.runtime_dict.items():
+            logging.info(f"{depth}{debug_prefix} [{key}]: [{value}]")
 
+        return existed
+
+    # Dump current runtime_dict into the runtime.yaml
+    def save_current_runtime(self, depth):
+        debug_prefix = "[AIORuntime.save_runtime]"
+        # logging.debug(f"{depth}{debug_prefix} Dumping current runtime_dict to runtime.yaml")
+        self.aio_main.utils.dump_yaml(self.runtime_dict, self.aio_main.context.paths.runtime_file, depth + "| ", silent = True)
+
+    # Wrapper for loading the profiled marked on the runtime.yaml config
+    def load_profile_on_runtime_dict(self, depth):
+        self.load_profile(self.runtime_dict["last_profile"] + ".yaml", depth + "| ")
+
+    # # Profile
+
+    # Persistent database file across runs with GUI default configs, settings
+    def load_profile(self, name, depth):
+        debug_prefix = "[AIORuntime.load_database]"
+
+        logging.debug(f"{depth}{debug_prefix} Attempting to load profile with name [{name}]")
+        self.current_profile = name
+
+        self.profile_yaml_path = f"{self.aio_main.context.paths.profiles_dir}{os.path.sep}{name}"
+        logging.debug(f"{depth}{debug_prefix} Profile YAML should be located at: [{self.profile_yaml_path}]")
+
+        self.profile = self.aio_main.utils.load_yaml(self.profile_yaml_path, depth + "| ")
 
 # Context vars (configured stuff)
 class AIOContext:
@@ -172,4 +183,4 @@ class AIOContext:
         self.paths = AIOPaths(self.aio_main, depth + "| ")
 
         logging.info(f"{depth}{debug_prefix} Creating AIORuntime")
-        self.runtime = AIORuntime(self.aio_main, depth + "| ")
+        self.runtime = AIORuntime(self.aio_main)

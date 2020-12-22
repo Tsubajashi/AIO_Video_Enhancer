@@ -83,12 +83,11 @@ class AIOEnhancerMain:
         # # We can now set up logging as we have where this file is located at
 
         # Handlers on logging to file and shell output
-        log_to_file_handler = logging.FileHandler(filename = self.LOG_FILE)
+        log_to_file_handler = logging.FileHandler(filename = self.LOG_FILE, encoding = 'utf-8')
         log_to_stdout_handler = logging.StreamHandler(sys.stdout)
 
         # Start the logging global class, output to file and stdout
         logging.basicConfig(
-            encoding = 'utf-8',
             level = logging.DEBUG,
             format = "[%(levelname)-7s] [%(filename)-15s:%(lineno)-3d] %(message)s",
             handlers = [log_to_file_handler, log_to_stdout_handler],
@@ -113,7 +112,7 @@ class AIOEnhancerMain:
         }.get(os.name)
 
         # Log which OS we're runnig
-        logging.info(f"{depth}{debug_prefix} Running All in Onne Video Enhancer on OS: [{self.os}]")
+        logging.info(f"{depth}{debug_prefix} Running All in One Video Enhancer on OS: [{self.os}]")
 
         # # Create classes
 
@@ -132,9 +131,13 @@ class AIOEnhancerMain:
         logging.info(f"{depth}{debug_prefix} Creating AIOCore")
         self.core = AIOCore(self, depth + "| ")
 
-        # Open persistent database file across runs
-        logging.info(f"{depth}{debug_prefix} Opening persistent database")
-        self.context.runtime.open_persistent_database(depth + "| ")
+        # Check if it's first time running
+        logging.info(f"{depth}{debug_prefix} Checking for previous runtime.yaml..")
+
+        if self.context.runtime.load_runtime(depth + "| "):
+            logging.info(f"{depth}{debug_prefix} Previous runtime.yaml found, loading the profile said there")
+            
+        self.context.runtime.load_profile_on_runtime_dict(depth + "| ")
 
     # Execute AIO main routine
     def run(self, depth):

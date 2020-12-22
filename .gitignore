@@ -13,3 +13,6 @@ venvs
 *.jpg
 *.png
 *.shelf
+
+# Runtime files
+src/aio_enhancer/data/runtime.yaml
