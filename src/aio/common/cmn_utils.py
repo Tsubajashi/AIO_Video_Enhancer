@@ -196,7 +196,9 @@ class Utils:
             logging.info(f"{debug_prefix} Absolute path of [{path}] is [{abspath}]")
 
         got = self._get_realpath(path = abspath, silent = True)
-        logging.info(f"{debug_prefix} Returning absolute and real path of [{path}] -> [{got}]")
+
+        if not silent:
+            logging.info(f"{debug_prefix} Returning absolute and real path [{got}]")
 
         # Get the realpath (if it's a symlink get where it points to)
         return got
@@ -257,7 +259,7 @@ class Utils:
         # Debug and return
         if not silent:
             logging.debug(f"{debug_prefix} String without that suffix is [{done}]")
-            
+
         return done
     
     # If data is string, "abc" -> ["abc"], if data is list, return data

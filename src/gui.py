@@ -54,9 +54,10 @@ runtime_dict = aio_main.context.runtime_dict
 
 # # GUI specific
 
-import logging
 from dearpygui.core import *
 from dearpygui.simple import *
+import logging
+import shutil
 
 set_theme(runtime_dict.get("theme", "dark"))
 
@@ -83,6 +84,8 @@ def retrieve_callback(sender, callback):
     ]:
         # print(f"[{identifier}]: {get_value(identifier)}")
         
+        any_action = False
+        
         # The value of the identifier that has changed
         val = get_value(identifier)
 
@@ -90,20 +93,27 @@ def retrieve_callback(sender, callback):
             if runtime_dict["input_video"] != val:
                 logging.info(f"Changing key runtime_dict[input_video] to {val}")
                 runtime_dict["input_video"] = val
+                any_action = True
 
         elif identifier == "Output Video##inputtext":
             if runtime_dict["output_video"] != val:
                 logging.info(f"Changing key runtime_dict[output_video] to {val}")
                 runtime_dict["output_video"] = val
+                any_action = True
 
         elif identifier == "##combobox_profile":
             if runtime_dict["last_profile"] != val:
                 profile_name = combobox_profile_profiles[val]
                 logging.info(f"Changing key runtime_dict[last_profile] to {val} = {profile_name}")
                 runtime_dict["last_profile"] = profile_name
+                aio_main.context.load_profile_on_runtime_dict()
+                any_action = True
 
+        if any_action:
+            aio_main.context.save_current_runtime()
+            print("-" * shutil.get_terminal_size()[0])
 
-        aio_main.context.save_current_runtime()
+    print("=" * shutil.get_terminal_size()[0])
 
 
 def theme_callback(sender, data):

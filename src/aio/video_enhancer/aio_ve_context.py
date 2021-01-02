@@ -58,7 +58,7 @@ class AioVEnhancerContext:
     # On the directories.yaml we refer to the directory of the __init__.py with ~~
     # and replace / with the according os.path.sep
     def expand_dir(self, dir_string):
-        debug_prefix = "[AIOPaths.expand_dir]"
+        debug_prefix = "[AioVEnhancerContext.expand_dir]"
 
         logging.debug(f"{debug_prefix} Expanding path [{dir_string}]")
 
@@ -78,7 +78,7 @@ class AioVEnhancerContext:
     # Load the runtime file (saves last profile, last input / output video configured)
     # Returns False if no file existed before, True if it existed
     def load_runtime(self):
-        debug_prefix = "[AIORuntime.load_runtime]"
+        debug_prefix = "[AioVEnhancerContext.load_runtime]"
 
         # Did the runtime.yaml file exist? if not create the default and needed values
         existed = os.path.exists(self.runtime_file)
@@ -106,7 +106,7 @@ class AioVEnhancerContext:
 
     # Dump current runtime_dict into the runtime.yaml
     def save_current_runtime(self):
-        debug_prefix = "[AIORuntime.save_runtime]"
+        debug_prefix = "[AioVEnhancerContext.save_runtime]"
         # logging.debug(f"{debug_prefix} Dumping current runtime_dict to runtime.yaml")
         self.aio_ve_main.utils.dump_yaml(self.runtime_dict, self.runtime_file, silent = True)
 
@@ -118,12 +118,14 @@ class AioVEnhancerContext:
 
     # Persistent database file across runs with GUI default configs, settings
     def load_profile(self, name):
-        debug_prefix = "[AIORuntime.load_database]"
+        debug_prefix = "[AioVEnhancerContext.load_database]"
 
         logging.debug(f"{debug_prefix} Attempting to load profile with name [{name}]")
         self.current_profile = name
 
-        self.profile_yaml_path = f"{self.aio_ve_main.context.paths.profiles_dir}{os.path.sep}{name}"
+        self.profile_yaml_path = f"{self.aio_ve_main.top_level_interface.profiles_dir}{os.path.sep}{name}"
         logging.debug(f"{debug_prefix} Profile YAML should be located at: [{self.profile_yaml_path}]")
 
         self.profile = self.aio_ve_main.utils.load_yaml(self.profile_yaml_path)
+
+        logging.debug(f"{debug_prefix} AioVEnhancerContext.profiles is {self.profile}")

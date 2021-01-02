@@ -294,9 +294,10 @@ f"""{"-"*self.terminal_width}\n
         self.data_dir = f"{self.AIO_PACKAGE_ROOT}{sep}data"
         logging.info(f"{debug_prefix} Data dir is [{self.data_dir}]")
 
-        # Configuration dir
-        self.config_dir = f"{self.AIO_PACKAGE_ROOT}{sep}config"
-        logging.info(f"{debug_prefix} Config dir is [{self.config_dir}]")
+        # Profiles dir
+        self.profiles_dir = f"{self.data_dir}{sep}profiles"
+        logging.info(f"{debug_prefix} Profiles dir is [{self.profiles_dir}]")
+        self.utils.mkdir_dne(path = self.profiles_dir)
 
         # Sessions dir
         self.sessions_dir = f"{self.AIO_PACKAGE_ROOT}{sep}sessions"
