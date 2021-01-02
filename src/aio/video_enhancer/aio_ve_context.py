@@ -95,6 +95,7 @@ class AioVEnhancerContext:
 
             self.save_current_runtime()
         else:
+            logging.info(f"{debug_prefix} Loading runtime.yaml..")
             self.runtime_dict = self.aio_ve_main.utils.load_yaml(self.runtime_file)
 
         logging.info(f"{debug_prefix} Loaded runtime.yaml, here's the values we got:")

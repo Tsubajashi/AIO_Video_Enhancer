@@ -124,11 +124,11 @@ def theme_callback(sender, data):
 
 def menuitem(sender, data):
     if sender == "Project Repository":
-        aio_main.utils.open_url("https://github.com/tsubajashi/aio_main_video_enhancer", )
+        aio_main.utils.open_url("https://github.com/tsubajashi/aio_video_enhancer", )
     elif sender == "Contributors":
-        aio_main.utils.open_url("https://github.com/Tsubajashi/aio_main_Video_Enhancer/graphs/contributors", )
+        aio_main.utils.open_url("https://github.com/Tsubajashi/aio_video_enhancer/graphs/contributors", )
     elif sender == "Documentation":
-        aio_main.utils.open_url("https://github.com/Tsubajashi/aio_main_Video_Enhancer/wiki", )
+        aio_main.utils.open_url("https://github.com/Tsubajashi/aio_video_enhancer/wiki", )
 
     
 with window(
