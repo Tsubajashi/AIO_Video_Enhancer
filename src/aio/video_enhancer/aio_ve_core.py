@@ -8,7 +8,8 @@
 #
 # ==============================================================================
 #
-#   Purpose: Utilities for videos, mainly a wrapper around FFmpeg / FFprobe
+#   Purpose: Main routines for executing, dealing with surprocesses, threading
+# if applied for the AIO Enhancer project
 #
 # ==============================================================================
 #
@@ -36,46 +37,11 @@
 #
 # ==============================================================================
 
-import logging
-
-
-class AIOVideo:
-    def __init__(self, aio_main, depth):
-        debug_prefix = "[AIOCore.__init__]"
+# Manage and store where directories should be
+class AioVEnhancerCore:
+    def __init__(self, aio_main):
+        debug_prefix = "[AioVEnhancerCore.__init__]"
         self.aio_main = aio_main
 
-        # # Get FFmpeg / FFprobe binaries
-
-        # # FFmpeg
-
-        logging.info(f"{depth}{debug_prefix} Getting FFmpeg binary, also searching on externals dir")
-        self.ffmpeg_bin = self.aio_main.utils.get_executable_with_name(
-            "ffmpeg", depth + "| ", extra_paths = self.aio_main.context.paths.externals_dir
-        )
-
-        # That function returns None if none was found, this is an error and we can't continue
-        if self.ffmpeg_bin is None:
-            err = "No FFmpeg binary was found, we can't continue"
-            logging.error(f"{depth}{debug_prefix} {err}")
-            raise RuntimeError(err)
-
-        logging.info(f"{depth}{debug_prefix} FFmpeg binary found at [{self.ffmpeg_bin}]")
-
-
-        # # FFprobe
-        
-        logging.info(f"{depth}{debug_prefix} Getting FFprobe binary, also searching on externals dir")
-        self.ffprobe_bin = self.aio_main.utils.get_executable_with_name(
-            "ffprobe", depth + "| ", extra_paths = self.aio_main.context.paths.externals_dir
-        )
-
-        # That function returns None if none was found, this is an error and we can't continue
-        if self.ffprobe_bin is None:
-            err = "No FFprobe binary was found, we can't continue"
-            logging.error(f"{depth}{debug_prefix} {err}")
-            raise RuntimeError(err)
-
-        logging.info(f"{depth}{debug_prefix} FFprobe binary found at [{self.ffprobe_bin}]")
-
-
-
+    def run(self):
+        self.aio_main.top_level_interface.thanks_message()

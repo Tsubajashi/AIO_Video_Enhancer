@@ -1,0 +1,9 @@
+dearpygui==0.6.42
+patool==1.12
+pip-chill==1.0.0
+pyunpack==0.2.2
+pyyaml==5.3.1
+requests==2.25.1
+toml==0.10.2
+tqdm==4.55.1
+wget==3.2

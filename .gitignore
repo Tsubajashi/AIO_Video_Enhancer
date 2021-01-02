@@ -14,8 +14,9 @@ venvs
 *.png
 *.shelf
 
-# Runtime files
-src/aio_enhancer/data/runtime.yaml
-
 # Externals folder (ffmpeg.exe, ffprobe.exe, etc)
-src/aio_enhancer/externals
+src/aio/externals
+
+# Sessions, runtime
+src/aio/sessions
+src/aio/runtime

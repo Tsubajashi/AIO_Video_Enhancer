@@ -8,8 +8,7 @@
 #
 # ==============================================================================
 #
-#   Purpose: Main routines for executing, dealing with surprocesses, threading
-# if applied for the AIO Enhancer project
+#   Purpose: Set up logging if there is none
 #
 # ==============================================================================
 #
@@ -37,11 +36,25 @@
 #
 # ==============================================================================
 
-# Manage and store where directories should be
-class AIOCore:
-    def __init__(self, aio_main, depth):
-        debug_prefix = "[AIOCore.__init__]"
-        self.aio_main = aio_main
+import logging
+import sys
 
-    def run(self):
-        self.aio_main.thanks_message()
+# If we're somehow loading / executing this file alone without a Python logging
+# main interface class, we'll have no logging handler going one so
+# we empty out every logger handler and add one for outputting to
+# system's stdout with not really any special formatting apart from
+# the log level and the message string
+
+# Get current logger if any
+logger = logging.getLogger()
+
+# If handlers list is not empty
+if not logger.handlers:
+    print("[cmn_any_logger.py] No logger found, creating one with StreamHandler(sys.stdout)")
+
+    # Create basic logger
+    logging.basicConfig(
+        handlers = [logging.StreamHandler(sys.stdout)],
+        level = logging.INFO,
+        format = "[%(levelname)-7s] %(message)s",
+    )

@@ -1,8 +1,14 @@
+# ==============================================================================
+#
 # MIT License
 #
 # Copyright (c) 2020,
 #  - Tremeschin < https://tremeschin.gitlab.io > 
 #  - Tsubajashi < https://github.com/Tsubajashi >
+#
+# ==============================================================================
+#
+#   Purpose: Facilitate the end user by giving an GUI interface
 #
 # ==============================================================================
 #
@@ -30,24 +36,25 @@
 #
 # ==============================================================================
 
-# AIOVE
+debug_prefix = "[DearPyGUI]"
 
-debug_prefix = "[gui.py]"
+import aio
 
-import aio_enhancer
+interface = aio.TopLevelInterface()
 
-# Create main class of AIO
-aio = aio_enhancer.AIOEnhancerMain()
+# Ensure FFmpeg
+interface.download_check_ffmpeg()
 
-import threading
-# threading.Thread(target = aio.run, daemon = True).start()
+# Get the video enhancer interface
+video_enhancer = interface.get_video_enhancer_interface()
 
-import logging
-
-runtime_dict = aio.context.runtime.runtime_dict
+# Short path
+aio_main = video_enhancer.aio_ve_main
+runtime_dict = aio_main.context.runtime_dict
 
 # # GUI specific
 
+import logging
 from dearpygui.core import *
 from dearpygui.simple import *
 
@@ -58,13 +65,12 @@ set_style_antialiased_lines(True)
 # dearpygui on Windows considers the title bar within the limits
 # of the target window size..? workaround is to create a tiny bit
 # larger window size on Windows OS that matches what we expect
-if aio.os == "windows":
+if interface.os == "windows":
     set_main_window_size(1015, 540)
 else:
     set_main_window_size(1000, 500)
 
 set_style_window_rounding(0)
-depth = ">"
 
 combobox_profile_profiles = ["anime", "generic"]
 
@@ -97,22 +103,22 @@ def retrieve_callback(sender, callback):
                 runtime_dict["last_profile"] = profile_name
 
 
-        aio.context.runtime.save_current_runtime(depth)
+        aio_main.context.save_current_runtime()
 
 
 def theme_callback(sender, data):
     runtime_dict["theme"] = sender
     set_theme(sender)
-    aio.context.runtime.save_current_runtime(depth)
+    aio_main.context.runtime.save_current_runtime()
 
 
 def menuitem(sender, data):
     if sender == "Project Repository":
-        aio.utils.open_url("https://github.com/tsubajashi/aio_video_enhancer", depth)
+        aio_main.utils.open_url("https://github.com/tsubajashi/aio_main_video_enhancer", )
     elif sender == "Contributors":
-        aio.utils.open_url("https://github.com/Tsubajashi/AIO_Video_Enhancer/graphs/contributors", depth)
+        aio_main.utils.open_url("https://github.com/Tsubajashi/aio_main_Video_Enhancer/graphs/contributors", )
     elif sender == "Documentation":
-        aio.utils.open_url("https://github.com/Tsubajashi/AIO_Video_Enhancer/wiki", depth)
+        aio_main.utils.open_url("https://github.com/Tsubajashi/aio_main_Video_Enhancer/wiki", )
 
     
 with window(
