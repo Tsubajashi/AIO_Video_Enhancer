@@ -38,6 +38,8 @@
 # ==============================================================================
 
 from aio.video_enhancer.aio_ve_main import AioVEnhancerMain
+import logging
+
 
 class AioVEInterface:
     def __init__(self, top_level_interface):
