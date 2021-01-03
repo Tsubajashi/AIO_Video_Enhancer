@@ -43,7 +43,7 @@ import aio
 interface = aio.TopLevelInterface()
 
 # Ensure FFmpeg
-interface.download_check_ffmpeg()
+interface.download_check_ffmpeg(making_release = True)
 
 # Get the video enhancer interface
 video_enhancer = interface.get_video_enhancer_interface()
@@ -60,20 +60,24 @@ import logging
 import shutil
 
 set_theme(runtime_dict.get("theme", "dark"))
-
 set_style_antialiased_lines(True)
 
 # dearpygui on Windows considers the title bar within the limits
 # of the target window size..? workaround is to create a tiny bit
 # larger window size on Windows OS that matches what we expect
 if interface.os == "windows":
-    set_main_window_size(1015, 540)
+    WIDTH, HEIGHT = 1015, 540
 else:
-    set_main_window_size(1000, 500)
+    WIDTH, HEIGHT = 1000, 500
 
+# TODO: custom gui scaling?
+gui_scaling = 1.1
+
+set_main_window_size(int(WIDTH * gui_scaling), int(HEIGHT * gui_scaling))
 set_style_window_rounding(0)
 
 combobox_profile_profiles = ["anime", "generic"]
+
 
 def retrieve_callback(sender, callback):
     for identifier in [
@@ -81,6 +85,10 @@ def retrieve_callback(sender, callback):
         "Output Video##inputtext",
         "Input Video ##inputtext",
         "##combobox_profile",
+
+        # Input / output select video buttons
+        "Select##input_video",
+        "Select##output_video",
     ]:
         # print(f"[{identifier}]: {get_value(identifier)}")
         
@@ -91,15 +99,15 @@ def retrieve_callback(sender, callback):
 
         if identifier == "Input Video ##inputtext":
             if runtime_dict["input_video"] != val:
+                any_action = True
                 logging.info(f"Changing key runtime_dict[input_video] to {val}")
                 runtime_dict["input_video"] = val
-                any_action = True
 
         elif identifier == "Output Video##inputtext":
             if runtime_dict["output_video"] != val:
+                any_action = True
                 logging.info(f"Changing key runtime_dict[output_video] to {val}")
                 runtime_dict["output_video"] = val
-                any_action = True
 
         elif identifier == "##combobox_profile":
             if runtime_dict["last_profile"] != val:
@@ -107,7 +115,11 @@ def retrieve_callback(sender, callback):
                 logging.info(f"Changing key runtime_dict[last_profile] to {val} = {profile_name}")
                 runtime_dict["last_profile"] = profile_name
                 aio_main.context.load_profile_on_runtime_dict()
-                any_action = True
+
+        elif identifier == "Select##input_video":
+            any_action = True
+
+        # elif identifier == "Select##output_video":
 
         if any_action:
             aio_main.context.save_current_runtime()
@@ -119,7 +131,7 @@ def retrieve_callback(sender, callback):
 def theme_callback(sender, data):
     runtime_dict["theme"] = sender
     set_theme(sender)
-    aio_main.context.runtime.save_current_runtime()
+    aio_main.context.save_current_runtime()
 
 
 def menuitem(sender, data):
@@ -133,7 +145,7 @@ def menuitem(sender, data):
     
 with window(
         "Menu Bar",
-        width = 1000, height = 5,
+        width = int(1000 * gui_scaling), height = 5,
         x_pos = 0, y_pos = 0,
         no_resize = True, no_move = True,
         no_scrollbar = True, no_title_bar = True,
@@ -168,7 +180,7 @@ with window(
 
 with window(
         "Input / Output",
-        width = 750, height = 100,
+        width = int(750 * gui_scaling), height = int(100 * gui_scaling),
         x_pos = 0, y_pos = 31,
         no_resize = True, no_move = True,
         no_scrollbar = True, no_title_bar = True,
@@ -185,7 +197,7 @@ with window(
         default_value = runtime_dict.get("input_video", ""), width = 585
     )
     add_same_line()
-    add_button("Select##input_video", callback = retrieve_callback)
+    add_button("Select##input_video", callback = file_picker)
 
     # Output Video text entry
     add_input_text(
@@ -193,14 +205,14 @@ with window(
         default_value = runtime_dict.get("output_video", ""), width = 585
     )
     add_same_line()
-    add_button("Select##output_video", callback = retrieve_callback)
+    add_button("Select##output_video", callback = file_picker)
     add_separator()
     
 
 with window(
         "Profile",
-        width = 250, height = 100,
-        x_pos = 750, y_pos = 31,
+        width = int(250 * gui_scaling), height = int(100 * gui_scaling),
+        x_pos = int(750 * gui_scaling), y_pos = 31,
         no_resize = True, no_move = True,
         no_scrollbar = True, no_title_bar = True,
         no_collapse = True, horizontal_scrollbar = False,
@@ -220,8 +232,8 @@ with window(
 
 with window(
         "Progress",
-        width = 1000, height = 50,
-        x_pos = 0, y_pos = 450,
+        width = int(1000 * gui_scaling), height = 65,
+        x_pos = 0, y_pos = int(450 * gui_scaling + 20*gui_scaling - 30),
         no_resize = True, no_move = True,
         no_scrollbar = True, no_title_bar = True,
         no_collapse = True, horizontal_scrollbar = False,

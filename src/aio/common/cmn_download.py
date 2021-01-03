@@ -37,7 +37,6 @@
 # ==============================================================================
 
 import aio.common.cmn_any_logger
-from pyunpack import Archive
 from tqdm import tqdm
 import requests
 import zipfile
@@ -90,13 +89,9 @@ class Download:
         r = requests.get(url)
         return r.text
 
-    # Extract a compressed file
-    def extract_file(self, src, dst):
-        debug_prefix = "[Download.extract_file]"
-        logging.info(f"{debug_prefix} Extracing [{src}] -> [{dst}]")
-
-        Archive(src).extractall(dst)
-    
     def extract_zip(self, src, dst):
+        debug_prefix = "[Download.extract_zip]"
+        logging.info(f"{debug_prefix} Extracing [{src}] -> [{dst}]")
+        
         with zipfile.ZipFile(src, 'r') as zipped:
             zipped.extractall(dst)

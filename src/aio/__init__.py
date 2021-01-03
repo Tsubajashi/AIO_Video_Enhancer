@@ -45,6 +45,7 @@ import tempfile
 import logging
 import struct
 import shutil
+import json
 import toml
 import math
 import sys
@@ -347,54 +348,90 @@ f"""{"-"*self.terminal_width}\n
         if getattr(sys, 'frozen', False):
             logging.info(f"{debug_prefix} Not checking ffmpeg.exe because is executable build.. (should have ffmpeg.exe bundled?)")
             return
-
-        sep = os.path.sep
-
-        # If the code is being run on a Windows OS
-        if (self.os == "windows") or (making_release):
-
-            if making_release:
-                logging.info(f"{debug_prefix} Getting FFmpeg for Windows regardless the OS because making_release=True")
-
-            # Where we should find the ffmpeg binary
-            FINAL_FFMPEG_FINAL_BINARY = self.externals_dir + f"{sep}ffmpeg.exe"
-            FINAL_FFPROBE_FINAL_BINARY = self.externals_dir + f"{sep}ffprobe.exe"
-
-            # If we don't have FFmpeg binary on externals dir
-            if not os.path.isfile(FINAL_FFMPEG_FINAL_BINARY):
-
-                # Get the latest release number of ffmpeg
-                ffmpeg_release = self.download.get_html_content("https://www.gyan.dev/ffmpeg/builds/release-version")
-                logging.info(f"{debug_prefix} FFmpeg release number is [{ffmpeg_release}]")
-
-                # Where we'll save the compressed zip of FFmpeg
-                ffmpeg_7z = self.downloads_dir + f"{sep}ffmpeg-{ffmpeg_release}-essentials_build.7z"
-
-                # Download FFmpeg build
-                self.download.wget(
-                    "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z",
-                    ffmpeg_7z, f"FFmpeg v={ffmpeg_release}"
-                )
-
-                # Extract the files
-                self.download.extract_file(ffmpeg_7z, self.downloads_dir)
-
-                # Where the FFmpeg binary is located and move it
-                ffmpeg_bin = ffmpeg_7z.replace(".7z", "") + f"{sep}bin{sep}ffmpeg.exe"
-                self.utils.move(ffmpeg_bin, FINAL_FFMPEG_FINAL_BINARY)
-
-                # Where the FFprobe binary is located and move it
-                ffprobe_bin = ffmpeg_7z.replace(".7z", "") + f"{sep}bin{sep}ffprobe.exe"
-                self.utils.move(ffprobe_bin, FINAL_FFPROBE_FINAL_BINARY)
-
-            else:
-                logging.info(f"{debug_prefix} Already have [ffmpeg.exe] downloaded and extracted at [{FINAL_FFMPEG_FINAL_BINARY}]")
-        else:
+        
+        if (self.os == "linux") and (not making_release):
             # We're on Linux so checking ffmpeg external dependency
             logging.info(f"{debug_prefix} You are using Linux, please make sure you have FFmpeg package installed on your distro, we'll just check for it now..")
             
             # Can't continue
             if not self.utils.has_executable_with_name("ffmpeg"):
                 logging.error(f"{debug_prefix} Couldn't find lowercase ffmpeg binary on PATH, install from your Linux distro package manager / macOS homebrew")
+                sys.exit(-1)
+            return
 
+        sep = os.path.sep
 
+        # Where we should find the ffmpeg binary
+        FINAL_FFMPEG_FINAL_BINARY = self.externals_dir + f"{sep}ffmpeg.exe"
+        FINAL_FFPROBE_FINAL_BINARY = self.externals_dir + f"{sep}ffprobe.exe"
+
+        # If we don't have FFmpeg binary on externals dir
+        if not os.path.isfile(FINAL_FFMPEG_FINAL_BINARY):
+
+            # License of FFmpeg
+            while True:
+                # Just enable word wrapping for editing this, annoying to type long strings with ("" "" "")
+                # and this part is not strictly required, just for our safety we suppose
+                print("\n" + "-" * shutil.get_terminal_size()[0])
+                u = input("\n We'll download an FFmpeg project [http://ffmpeg.org] pre built binary from the repository [https://github.com/BtbN/FFmpeg-Builds], latest release branch with the GPL license (for some extra components, namely x264), non shared linking and without the hard runtime dependency Vulkan added in the releases tab [https://github.com/BtbN/FFmpeg-Builds/releases].\n\n Please first read the legal terms at [http://ffmpeg.org/legal.html] and the build scripts on BtbN's repository as well as (if you want to) checking where they get and compile the source code from [spoiler: it's from [https://github.com/FFmpeg/FFmpeg] and [https://github.com/FFmpeg/FFmpeg/tree/release/LATEST_RELEASE_NUMBER]].\n\n Be aware that the All in One Video Enhancer project source code is under the MIT license, and that those binaries downloaded to the Externals folder have their own independent from AIO licenses.\n\n :: Type any of (y, yes, ya, ok) to continue (you acknowledge these previous statements though we / you will probably be fine either way): ")
+
+                if u.lower().replace(" ", "") in ["y", "yes", "ya", "ok"]:
+                    break
+
+            # Get the latest release number of ffmpeg
+            repo = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"
+            logging.info(f"{debug_prefix} Getting latest release info on repository: [{repo}]")
+            ffmpeg_release = json.loads(self.download.get_html_content(repo))
+
+            # The assets (downloadable stuff)
+            assets = ffmpeg_release["assets"]
+
+            logging.info(f"{debug_prefix} Available assets to download (checking for non shared, gpl, non vulkan release):")
+
+            # Parsing the version we target and want
+            for item in assets:
+
+                # The name of the 
+                name = item["name"]
+                logging.info(f"{debug_prefix} - [{name}]")
+
+                is_gpl = "lgpl" in name
+                is_shared = "shared" in name
+                have_vulkan = "vulkan" in name
+                from_master = "N" in name
+
+                logging.info(f"{debug_prefix} - :: Is LGPL:                   [{is_gpl:<1}] (expect: 0)")
+                logging.info(f"{debug_prefix} - :: Is Shared:                 [{is_shared:<1}] (expect: 0)")
+                logging.info(f"{debug_prefix} - :: Have Vulkan:               [{have_vulkan:<1}] (expect: 0)")
+                logging.info(f"{debug_prefix} - :: Master branch (N in name): [{from_master:<1}] (expect: 0)")
+
+                # We have a match!
+                if not (is_gpl + is_shared + have_vulkan + from_master):
+                    logging.info(f"{debug_prefix} - >> :: We have a match!!")
+                    download_url = item["browser_download_url"]
+                    break
+
+            logging.info(f"{debug_prefix} Download URL: [{download_url}]")
+
+            # Where we'll save the compressed zip of FFmpeg
+            ffmpeg_zip = self.downloads_dir + f"{sep}{name}"
+
+            # Download FFmpeg build
+            self.download.wget(
+                download_url,
+                ffmpeg_zip, f"FFmpeg v={name}"
+            )
+
+            # Extract the files
+            self.download.extract_zip(ffmpeg_zip, self.downloads_dir)
+
+            # Where the FFmpeg binary is located and move it
+            ffmpeg_bin = ffmpeg_zip.replace(".zip", "") + f"{sep}bin{sep}ffmpeg.exe"
+            self.utils.move(ffmpeg_bin, FINAL_FFMPEG_FINAL_BINARY)
+
+            # Where the FFprobe binary is located and move it
+            ffprobe_bin = ffmpeg_zip.replace(".zip", "") + f"{sep}bin{sep}ffprobe.exe"
+            self.utils.move(ffprobe_bin, FINAL_FFPROBE_FINAL_BINARY)
+
+        else:
+            logging.info(f"{debug_prefix} Already have [ffmpeg.exe] downloaded and extracted at [{FINAL_FFMPEG_FINAL_BINARY}]")
