@@ -276,7 +276,7 @@ f"""{"-"*self.terminal_width}\n
 
         # # Common directories between packages
 
-        # Externals dir
+        # Externals directory
         self.externals_dir = f"{self.AIO_PACKAGE_ROOT}{sep}externals"
         logging.info(f"{debug_prefix} Externals directory is [{self.externals_dir}]")
         self.utils.mkdir_dne(path = self.externals_dir)
@@ -286,21 +286,21 @@ f"""{"-"*self.terminal_width}\n
         logging.info(f"{debug_prefix} Downloads dir is [{self.downloads_dir}]")
         self.utils.mkdir_dne(path = self.downloads_dir)
 
-        # Runtime dir
+        # Runtime directory
         self.runtime_dir = f"{self.AIO_PACKAGE_ROOT}{sep}runtime"
         logging.info(f"{debug_prefix} Runtime directory is [{self.runtime_dir}]")
         self.utils.mkdir_dne(path = self.runtime_dir)
 
-        # Data dir
+        # Data directory
         self.data_dir = f"{self.AIO_PACKAGE_ROOT}{sep}data"
         logging.info(f"{debug_prefix} Data dir is [{self.data_dir}]")
 
-        # Profiles dir
+        # Profiles directory
         self.profiles_dir = f"{self.data_dir}{sep}profiles"
         logging.info(f"{debug_prefix} Profiles dir is [{self.profiles_dir}]")
         self.utils.mkdir_dne(path = self.profiles_dir)
 
-        # Sessions dir
+        # Sessions directory
         self.sessions_dir = f"{self.AIO_PACKAGE_ROOT}{sep}sessions"
         logging.info(f"{debug_prefix} Sessions directory is [{self.sessions_dir}]")
         self.utils.mkdir_dne(path = self.sessions_dir)
@@ -312,18 +312,56 @@ f"""{"-"*self.terminal_width}\n
 
         # # External dependencies where to append for PATH
 
+        # Externals directory for Linux
+        self.externals_dir_linux = f"{self.AIO_PACKAGE_ROOT}{sep}externals{sep}linux"
+        logging.info(f"{debug_prefix} Externals directory for Linux OS is [{self.externals_dir_linux}]")
+        self.utils.mkdir_dne(path = self.externals_dir_linux)
+
+        # Externals directory for Windows
+        self.externals_dir_windows = f"{self.AIO_PACKAGE_ROOT}{sep}externals{sep}windows"
+        logging.info(f"{debug_prefix} Externals directory for Windows OS is [{self.externals_dir_windows}]")
+        self.utils.mkdir_dne(path = self.externals_dir_windows)
+
+        # Externals directory for macOS
+        self.externals_dir_macos = f"{self.AIO_PACKAGE_ROOT}{sep}externals{sep}macos"
+        logging.info(f"{debug_prefix} Externals directory for Darwin OS (macOS) is [{self.externals_dir_macos}]")
+        self.utils.mkdir_dne(path = self.externals_dir_macos)
+
         # When using some function like Utils.get_executable_with_name, it have an argument
         # called extra_paths, add this for searching for the full externals directory.
         # Preferably use this interface methods like find_binary instead
         self.EXTERNALS_SEARCH_PATH = [
-            self.externals_dir
+            self.externals_dir,
+            self.externals_dir_linux,
+            self.externals_dir_windows,
+            self.externals_dir_macos,
         ]
+
+        # # This native platform externals dir
+        self.externals_dir_this_platform = self.__get_platform_external_dir(self.os)
+        logging.info(f"{debug_prefix} This platform externals directory is: [{self.externals_dir_this_platform}]")
 
         # Code flow management
         if self.prelude["flow"]["stop_at_initialization"]:
             logging.critical(f"{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
             sys.exit(0)
-        
+    
+    # Get the target externals dir for this platform
+    def __get_platform_external_dir(self, platform):
+        debug_prefix = "[AIOPackageInterface.__get_platform_external_dir]"
+
+        # # This platform externals dir
+        externals_dir = {
+            "linux": self.externals_dir_linux,
+            "windows": self.externals_dir_windows,
+            "macos": self.externals_dir_macos,
+        }.get(platform)
+
+        # log action
+        logging.info(f"{debug_prefix} Return external dir for platform [{platform}] -> [{externals_dir}]")
+
+        return externals_dir
+
     # Search for something in system's PATH, also searches for the externals folder
     # Don't append the extra .exe because Linux, macOS doesn't have these
     def find_binary(self, binary):
@@ -337,101 +375,173 @@ f"""{"-"*self.terminal_width}\n
 
         return found
 
-    # Make sure we have FFmpeg. Linux people please install from your distro's package manager
-    # For forcing to download the Windows binaries for a release, please send making_release=True
-    def download_check_ffmpeg(self, making_release = False):
-        debug_prefix = "[AIOPackageInterface.download_check_ffmpeg]"
+    # Make sure we have some target Externals, downloads latest release for them.
+    # For forcing to download the Windows binaries for a release, send os="windows" for overwriting
+    # otherwise it'll be set to this class's os.
+    #
+    # For FFmpeg: Linux and macOS people please install from your distro's package manager.
+    # Waifu2x ncnn vulkan and Rife ncnn vulkan we get from the latest release so no need to worry.
+    #
+    # Possible values for target are: ["ffmpeg", "rife-ncnn-vulkan", "waifu2x-ncnn-vulkan"]
+    #
+    def check_download_externals(self, target_externals = [], platform = None):
+        debug_prefix = "[AIOPackageInterface.check_download_externals]"
+
+        # Overwrite os if user set to a specific one
+        if platform is None:
+            platform = self.os
+        else:
+            # Error assertion, only allow linux, macos or windows target os
+            valid = ["linux", "macos", "windows"]
+            if not platform in valid:
+                err = f"Target os [{platform}] not valid: should be one of {valid}"
+                logging.error(f"{debug_prefix} {err}")
+                raise RuntimeError(err)
+
+        # Force the externals argument to be a list
+        target_externals = self.utils.force_list(target_externals)
 
         # Log action
-        logging.info(f"{debug_prefix} Checking for FFmpeg on Linux or downloading for Windows / if (making release: [{making_release}]")
+        logging.info(f"{debug_prefix} Checking externals {target_externals} for os = [{platform}]")
 
+        # We're frozen (running from release..)
         if getattr(sys, 'frozen', False):
-            logging.info(f"{debug_prefix} Not checking ffmpeg.exe because is executable build.. (should have ffmpeg.exe bundled?)")
-            return
-        
-        if (self.os == "linux") and (not making_release):
-            # We're on Linux so checking ffmpeg external dependency
-            logging.info(f"{debug_prefix} You are using Linux, please make sure you have FFmpeg package installed on your distro, we'll just check for it now..")
-            
-            # Can't continue
-            if not self.utils.has_executable_with_name("ffmpeg"):
-                logging.error(f"{debug_prefix} Couldn't find lowercase ffmpeg binary on PATH, install from your Linux distro package manager / macOS homebrew")
-                sys.exit(-1)
+            logging.info(f"{debug_prefix} Not checking for externals because is executable build.. (should have them bundled?)")
             return
 
+        # Short hand
         sep = os.path.sep
+        
+        # The target externals dir for this platform, it must be windows if we're here..
+        target_externals_dir = self.__get_platform_external_dir(platform)
 
-        # Where we should find the ffmpeg binary
-        FINAL_FFMPEG_FINAL_BINARY = self.externals_dir + f"{sep}ffmpeg.exe"
-        FINAL_FFPROBE_FINAL_BINARY = self.externals_dir + f"{sep}ffprobe.exe"
+        # For each target external
+        for external in target_externals:
+            debug_prefix = "[AIOPackageInterface.check_download_externals]"
+            logging.info(f"{debug_prefix} Checking / downloading external: [{external}] for platform [{platform}]")
+            
+            # # FFmpeg / FFprobe
 
-        # If we don't have FFmpeg binary on externals dir
-        if not os.path.isfile(FINAL_FFMPEG_FINAL_BINARY):
+            if external == "ffmpeg":
+                debug_prefix = "[AIOPackageInterface.check_download_externals(ffmpeg)]"
 
-            # License of FFmpeg
-            while True:
-                # Just enable word wrapping for editing this, annoying to type long strings with ("" "" "")
-                # and this part is not strictly required, just for our safety we suppose
-                print("\n" + "-" * shutil.get_terminal_size()[0])
-                u = input("\n We'll download an FFmpeg project [http://ffmpeg.org] pre built binary from the repository [https://github.com/BtbN/FFmpeg-Builds], latest release branch with the GPL license (for some extra components, namely x264), non shared linking and without the hard runtime dependency Vulkan added in the releases tab [https://github.com/BtbN/FFmpeg-Builds/releases].\n\n Please first read the legal terms at [http://ffmpeg.org/legal.html] and the build scripts on BtbN's repository as well as (if you want to) checking where they get and compile the source code from [spoiler: it's from [https://github.com/FFmpeg/FFmpeg] and [https://github.com/FFmpeg/FFmpeg/tree/release/LATEST_RELEASE_NUMBER]].\n\n Be aware that the All in One Video Enhancer project source code is under the MIT license, and that those binaries downloaded to the Externals folder have their own independent from AIO licenses.\n\n :: Type any of (y, yes, ya, ok) to continue (you acknowledge these previous statements though we / you will probably be fine either way): ")
+                # We're on Linux / macOS so checking ffmpeg external dependency on system's path
+                if platform in ["linux", "macos"]:
+                    logging.info(f"{debug_prefix} You are using Linux, please make sure you have FFmpeg package installed on your distro, we'll just check for it now..")
+                    
+                    # Can't continue
+                    if not self.utils.has_executable_with_name("ffmpeg"):
+                        logging.error(f"{debug_prefix} Couldn't find lowercase ffmpeg binary on PATH, install from your Linux distro package manager / macOS homebrew")
+                        sys.exit(-1)
+                    continue
+    
+                # License of FFmpeg
+                while True:
+                    # Just enable word wrapping for editing this, annoying to type long strings with ("" "" "")
+                    # and this part is not strictly required, just for our safety we suppose
+                    print("\n" + "-" * shutil.get_terminal_size()[0])
+                    u = input("\n We'll download an FFmpeg project [http://ffmpeg.org] pre built binary from the repository [https://github.com/BtbN/FFmpeg-Builds], latest release branch with the GPL license (for some extra components, namely x264), non shared linking and without the hard runtime dependency Vulkan added in the releases tab [https://github.com/BtbN/FFmpeg-Builds/releases].\n\n Please first read the legal terms at [http://ffmpeg.org/legal.html] and the build scripts on BtbN's repository as well as (if you want to) checking where they get and compile the source code from [spoiler: it's from [https://github.com/FFmpeg/FFmpeg] and [https://github.com/FFmpeg/FFmpeg/tree/release/LATEST_RELEASE_NUMBER]].\n\n Be aware that the All in One Video Enhancer project source code is under the MIT license, and that those binaries downloaded to the Externals folder have their own independent from AIO licenses.\n\n :: Type any of (y, yes, ya, ok) to continue (you acknowledge these previous statements though we / you will probably be fine either way): ")
 
-                if u.lower().replace(" ", "") in ["y", "yes", "ya", "ok"]:
-                    break
+                    if u.lower().replace(" ", "") in ["y", "yes", "ya", "ok"]:
+                        break
 
-            # Get the latest release number of ffmpeg
-            repo = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"
-            logging.info(f"{debug_prefix} Getting latest release info on repository: [{repo}]")
-            ffmpeg_release = json.loads(self.download.get_html_content(repo))
+                # Get the latest release number of ffmpeg
+                repo = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"
+                logging.info(f"{debug_prefix} Getting latest release info on repository: [{repo}]")
+                ffmpeg_release = json.loads(self.download.get_html_content(repo))
 
-            # The assets (downloadable stuff)
-            assets = ffmpeg_release["assets"]
+                # The assets (downloadable stuff)
+                assets = ffmpeg_release["assets"]
 
-            logging.info(f"{debug_prefix} Available assets to download (checking for non shared, gpl, non vulkan release):")
+                logging.info(f"{debug_prefix} Available assets to download (checking for non shared, gpl, non vulkan release):")
 
-            # Parsing the version we target and want
-            for item in assets:
+                # Parsing the version we target and want
+                for item in assets:
 
-                # The name of the 
-                name = item["name"]
-                logging.info(f"{debug_prefix} - [{name}]")
+                    # The name of the 
+                    name = item["name"]
+                    logging.info(f"{debug_prefix} - [{name}]")
 
-                is_gpl = "lgpl" in name
-                is_shared = "shared" in name
-                have_vulkan = "vulkan" in name
-                from_master = "N" in name
+                    # Expected stuff
+                    is_lgpl = "lgpl" in name
+                    is_shared = "shared" in name
+                    have_vulkan = "vulkan" in name
+                    from_master = "N" in name
 
-                logging.info(f"{debug_prefix} - :: Is LGPL:                   [{is_gpl:<1}] (expect: 0)")
-                logging.info(f"{debug_prefix} - :: Is Shared:                 [{is_shared:<1}] (expect: 0)")
-                logging.info(f"{debug_prefix} - :: Have Vulkan:               [{have_vulkan:<1}] (expect: 0)")
-                logging.info(f"{debug_prefix} - :: Master branch (N in name): [{from_master:<1}] (expect: 0)")
+                    # Log what we expect
+                    logging.info(f"{debug_prefix} - :: Is LGPL:                   [{is_lgpl:<1}] (expect: 0)")
+                    logging.info(f"{debug_prefix} - :: Is Shared:                 [{is_shared:<1}] (expect: 0)")
+                    logging.info(f"{debug_prefix} - :: Have Vulkan:               [{have_vulkan:<1}] (expect: 0)")
+                    logging.info(f"{debug_prefix} - :: Master branch (N in name): [{from_master:<1}] (expect: 0)")
 
-                # We have a match!
-                if not (is_gpl + is_shared + have_vulkan + from_master):
-                    logging.info(f"{debug_prefix} - >> :: We have a match!!")
-                    download_url = item["browser_download_url"]
-                    break
+                    # We have a match!
+                    if not (is_lgpl + is_shared + have_vulkan + from_master):
+                        logging.info(f"{debug_prefix} - >> :: We have a match!!")
+                        download_url = item["browser_download_url"]
+                        break
 
-            logging.info(f"{debug_prefix} Download URL: [{download_url}]")
+                logging.info(f"{debug_prefix} Download URL: [{download_url}]")
 
-            # Where we'll save the compressed zip of FFmpeg
-            ffmpeg_zip = self.downloads_dir + f"{sep}{name}"
+                # Where we'll save the compressed zip of FFmpeg
+                ffmpeg_zip = self.downloads_dir + f"{sep}{name}"
 
-            # Download FFmpeg build
-            self.download.wget(
-                download_url,
-                ffmpeg_zip, f"FFmpeg v={name}"
-            )
+                # Download FFmpeg build
+                self.download.wget(download_url, ffmpeg_zip, f"FFmpeg v={name}")
 
-            # Extract the files
-            self.download.extract_zip(ffmpeg_zip, self.downloads_dir)
+                # Extract the files
+                self.download.extract_zip(ffmpeg_zip, target_externals_dir)
 
-            # Where the FFmpeg binary is located and move it
-            ffmpeg_bin = ffmpeg_zip.replace(".zip", "") + f"{sep}bin{sep}ffmpeg.exe"
-            self.utils.move(ffmpeg_bin, FINAL_FFMPEG_FINAL_BINARY)
+            # # nihui ncnn vulkan stuff
+            
+            elif external in ["waifu2x-ncnn-vulkan", "rife-ncnn-vulkan"]:
+                debug_prefix = f"[AIOPackageInterface.check_download_externals({external})]"
 
-            # Where the FFprobe binary is located and move it
-            ffprobe_bin = ffmpeg_zip.replace(".zip", "") + f"{sep}bin{sep}ffprobe.exe"
-            self.utils.move(ffprobe_bin, FINAL_FFPROBE_FINAL_BINARY)
+                # Get the latest release info on waifu2x or rife
+                repo = f"https://api.github.com/repos/nihui/{external}/releases/latest"
+                logging.info(f"{debug_prefix} Getting latest release info on repository: [{repo}]")
+                nihui_releases = json.loads(self.download.get_html_content(repo))
 
-        else:
-            logging.info(f"{debug_prefix} Already have [ffmpeg.exe] downloaded and extracted at [{FINAL_FFMPEG_FINAL_BINARY}]")
+                # The latest assets assets list
+                assets = nihui_releases["assets"]
+
+                # nihui releases assets ending with an -windows, -{linux.ubuntu}, -macos
+                # so we'll search for those substrings
+                want_asset_with = {
+                    "linux":   ["linux", "ubuntu"],
+                    "macos":   ["macos"],
+                    "windows": ["windows"]
+                }.get(platform)
+                logging.info(f"{debug_prefix} Want asset with substring {want_asset_with}")
+
+                # # Loop through latest assets
+
+                logging.info(f"{debug_prefix} Available assets to download:")
+
+                # Parsing the version we target and want
+                for item in assets:
+
+                    # The name of the 
+                    name = item["name"]
+                    logging.info(f"{debug_prefix} - [{name}]")
+
+                    # If any substring is on the name then it's a match
+                    matches = any([want in name for want in want_asset_with])
+                
+                    # We got an match for this platform
+                    if matches:
+                        logging.info(f"{debug_prefix} - :: Matches!!")
+                        download_url = item["browser_download_url"]
+                        break  # this inner most for loop, need to download and extract
+                    else:
+                        logging.info(f"{debug_prefix} - Doesn't match")
+                
+                # Log where we'll be downloading from
+                logging.info(f"{debug_prefix} Download URL: [{download_url}]")
+
+                # Where to download the nihui zip
+                nihui_zip = self.downloads_dir + f"{sep}{name}"
+
+                # Download the zip and extract, nihui already includes a LICENSE file
+                # so we don't have to worry on warning the end user
+                self.download.wget(download_url, nihui_zip, f"nihui: {name}")
+                self.download.extract_zip(nihui_zip, target_externals_dir)

@@ -53,18 +53,19 @@ class Utils:
             "darwin": "macos"
         }.get(os.name)
 
-    # Make directory if it does not exist
-    def mkdir_dne(self, path):
+    # Make directory if it does not exist, alias for
+    # $ mkdir -p dst
+    def mkdir_dne(self, path, silent = False):
         debug_prefix = "[Utils.mkdir_dne]"
 
-        logging.info(f"{debug_prefix} Make directory if it doesn't exist [{path}]")
+        if not silent:
+            logging.info(f"{debug_prefix} Make directory if it doesn't exist [{path}]")
         
         # Always get the absolute path 
-        path = self.get_realpath_absolute(path = path)
+        path = self.get_realpath_absolute(path = path, silent = True)
 
         # Create the directories
-        logging.info(f"{debug_prefix} Create required directories")
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(path, exist_ok = True)
 
     # $ mv A B
     def move(self, src, dst, silent = False) -> None:
@@ -85,6 +86,7 @@ class Utils:
             err = f"{debug_prefix} Target path already exist"
             logging.error(err)
             raise RuntimeError(err)
+        
     # $ cp A B
     def copy(self, src, dst, silent = False) -> None:
         debug_prefix = "[Utils.copy]"
