@@ -65,7 +65,8 @@ class Download:
         
         print("\r Downloading file [{}]: [{}%] [{:.2f} MB / {:.2f} MB] ETA: [{} sec] AVG: [{:.2f} kB/s]".format(self.download_name, currentpercentage, current/1024/1024, total/1024/1024, eta, avgdown), end='', flush=True)
 
-    def wget(self, url, save, name="Undefined"):
+    # Downloads with wget, returns False if file didn't exist, True if it already exists
+    def wget(self, url, save, name = "Undefined"):
         debug_prefix = "[Download.wget]"
 
         self.download_name = name
@@ -75,10 +76,11 @@ class Download:
 
         if os.path.exists(save):
             logging.info(f"{debug_prefix} Download file already exists, skipping")
-            return
+            return True
 
         wget.download(url, save, bar=self.wget_progress_bar)
         print()
+        return False
     
     # Get html content
     def get_html_content(self, url):

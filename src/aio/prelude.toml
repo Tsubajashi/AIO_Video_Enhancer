@@ -3,5 +3,8 @@ log_to_file = true
 log_level = "debug"  # critical, debug, error, info
 log_format = "pretty"  # informational, pretty, economic, onlymessage
 
+[externals]
+dont_verify_delete_old_versions = false
+
 [flow]
 stop_at_initialization = false

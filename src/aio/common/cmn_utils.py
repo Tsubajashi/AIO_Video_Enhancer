@@ -66,6 +66,42 @@ class Utils:
 
         # Create the directories
         os.makedirs(path, exist_ok = True)
+    
+    # Deletes an directory, fail safe? Quits if we can't delete it..
+    def rmdir(self, path, silent = False) -> None:
+        debug_prefix = "[Utils.rmdir]"
+
+        # If the asked directory is even a path
+        if os.path.isdir(path):
+
+            # Log action
+            if not silent:
+                logging.info(f"{debug_prefix} Removing dir: [{path}]")
+
+            # Try removing with ignoring errors first..?
+            shutil.rmtree(path, ignore_errors = True)
+
+            # Not deleted? 
+            if os.path.isdir(path):
+
+                # Ok. We can't be silent here we're about to error out probably
+                logging.warn(f"{debug_prefix} Error removing directory with ignore_errors=True, trying again.. will quit if we can't")
+
+                # Remove without ignoring errors?
+                shutil.rmtree(path, ignore_errors = False)
+
+                # Still exists? oops, better quit
+                if os.path.isdir(path):
+                    logging.error(f"{debug_prefix} COULD NOT REMOVE DIRECTORY: [{path}]")
+                    sys.exit(-1)
+
+            # Warn we're done
+            if not silent:
+                logging.debug(f"{debug_prefix} Removed directory successfully")
+        else:
+            # Directory didn't exist at first, nothing to do here
+            if not silent:
+                logging.debug(f"{debug_prefix} Directory doesn't exists, nothing to do here... [{path}]")
 
     # $ mv A B
     def move(self, src, dst, silent = False) -> None:

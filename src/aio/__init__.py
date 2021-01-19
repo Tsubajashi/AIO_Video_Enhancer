@@ -52,7 +52,7 @@ import sys
 import os
 
 
-class TopLevelInterface:
+class AIOPackageInterface:
 
     def greeter_message(self):
 
@@ -279,17 +279,17 @@ f"""{"-"*self.terminal_width}\n
         # Externals directory
         self.externals_dir = f"{self.AIO_PACKAGE_ROOT}{sep}externals"
         logging.info(f"{debug_prefix} Externals directory is [{self.externals_dir}]")
-        self.utils.mkdir_dne(path = self.externals_dir)
+        self.utils.mkdir_dne(path = self.externals_dir, silent = True)
 
         # Downloads (inside externals)
         self.downloads_dir = f"{self.AIO_PACKAGE_ROOT}{sep}externals{sep}downloads"
         logging.info(f"{debug_prefix} Downloads dir is [{self.downloads_dir}]")
-        self.utils.mkdir_dne(path = self.downloads_dir)
+        self.utils.mkdir_dne(path = self.downloads_dir, silent = True)
 
         # Runtime directory
         self.runtime_dir = f"{self.AIO_PACKAGE_ROOT}{sep}runtime"
         logging.info(f"{debug_prefix} Runtime directory is [{self.runtime_dir}]")
-        self.utils.mkdir_dne(path = self.runtime_dir)
+        self.utils.mkdir_dne(path = self.runtime_dir, silent = True)
 
         # Data directory
         self.data_dir = f"{self.AIO_PACKAGE_ROOT}{sep}data"
@@ -298,12 +298,12 @@ f"""{"-"*self.terminal_width}\n
         # Profiles directory
         self.profiles_dir = f"{self.data_dir}{sep}profiles"
         logging.info(f"{debug_prefix} Profiles dir is [{self.profiles_dir}]")
-        self.utils.mkdir_dne(path = self.profiles_dir)
+        self.utils.mkdir_dne(path = self.profiles_dir, silent = True)
 
         # Sessions directory
         self.sessions_dir = f"{self.AIO_PACKAGE_ROOT}{sep}sessions"
         logging.info(f"{debug_prefix} Sessions directory is [{self.sessions_dir}]")
-        self.utils.mkdir_dne(path = self.sessions_dir)
+        self.utils.mkdir_dne(path = self.sessions_dir, silent = True)
 
         # Windoe juuuust in case
         if self.os == "windows":
@@ -315,17 +315,17 @@ f"""{"-"*self.terminal_width}\n
         # Externals directory for Linux
         self.externals_dir_linux = f"{self.AIO_PACKAGE_ROOT}{sep}externals{sep}linux"
         logging.info(f"{debug_prefix} Externals directory for Linux OS is [{self.externals_dir_linux}]")
-        self.utils.mkdir_dne(path = self.externals_dir_linux)
+        self.utils.mkdir_dne(path = self.externals_dir_linux, silent = True)
 
         # Externals directory for Windows
         self.externals_dir_windows = f"{self.AIO_PACKAGE_ROOT}{sep}externals{sep}windows"
         logging.info(f"{debug_prefix} Externals directory for Windows OS is [{self.externals_dir_windows}]")
-        self.utils.mkdir_dne(path = self.externals_dir_windows)
+        self.utils.mkdir_dne(path = self.externals_dir_windows, silent = True)
 
         # Externals directory for macOS
         self.externals_dir_macos = f"{self.AIO_PACKAGE_ROOT}{sep}externals{sep}macos"
         logging.info(f"{debug_prefix} Externals directory for Darwin OS (macOS) is [{self.externals_dir_macos}]")
-        self.utils.mkdir_dne(path = self.externals_dir_macos)
+        self.utils.mkdir_dne(path = self.externals_dir_macos, silent = True)
 
         # When using some function like Utils.get_executable_with_name, it have an argument
         # called extra_paths, add this for searching for the full externals directory.
@@ -340,7 +340,7 @@ f"""{"-"*self.terminal_width}\n
         # # This native platform externals dir
         self.externals_dir_this_platform = self.__get_platform_external_dir(self.os)
         logging.info(f"{debug_prefix} This platform externals directory is: [{self.externals_dir_this_platform}]")
-
+        
         # Code flow management
         if self.prelude["flow"]["stop_at_initialization"]:
             logging.critical(f"{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
@@ -375,6 +375,57 @@ f"""{"-"*self.terminal_width}\n
 
         return found
 
+    # If we have a previous version of this external extracted, ask to delete the old one
+    def verify_external_already_present(self, external_name, zipped_download, target_externals_dir):
+        debug_prefix = "[AIOPackageInterface.verify_external_already_present]"
+
+        # If user chose not to delete old versions
+        if self.prelude["externals"]["dont_verify_delete_old_versions"]:
+            logging.warn(f"{debug_prefix} Not verifying and deleting old versions of externals because configuration on [prelude.toml]")
+            return
+
+        # The extracted folder inside the zip
+        # FIXME: will error if the extracted folder has different name
+        extracted_external_folder_name = zipped_download.replace(".zip", "")
+
+        logging.info(f"{debug_prefix} Checking if no other version of External [{external_name}] is already extracted on [{target_externals_dir}]")
+
+        # Which externals are currently present (extracted)
+        extracted_externals = os.listdir(target_externals_dir)
+
+        # Iterate on the extracted externals
+        for external_folder in extracted_externals:
+
+            # If the external substring is present on the directories on the target platform dir
+            # if "ffmpeg" in "ffmpeg-n4.3.1-29-g89daac5fe2-win64-gpl-4.3" -> True
+            if external_name in external_folder:
+
+                # If this last version zip file is not a folder that have the external name
+                # for example, we have ffmpeg-2 and ffmpeg-3, the latest version is the -3
+                # when we iter through the directory we might find the two ["ffmpeg-2", "ffmpeg-3"]
+                # so we want to delte the one that contains "ffmpeg" and isn't "ffmpeg-3" (latest v.)
+                if extracted_external_folder_name != external_folder:
+
+                    # The full path of the old extracted external to delete
+                    full_path = f"{target_externals_dir}{os.path.sep}{external_folder}"
+
+                    logging.info(f"{debug_prefix} External [{external_folder}] is older version and extracted on Externals dir")
+                    logging.info(f"{debug_prefix} Asking user to delete path: [{full_path}]")
+                    
+                    # Ask the user to enter y or n for deleting or not the 
+                    while True:
+                        uinput = input(f"\nA new version of the external [{external_name}] was downloaded and extracted, delete the old one at [{full_path}] ? New one is [{extracted_external_folder_name}] (y/n): ")
+
+                        uinput = uinput.lower()
+
+                        if uinput == "y":
+                            self.utils.rmdir(path = full_path)
+                            break
+                        elif uinput == "n":
+                            break
+                        else:
+                            print("\n Entered answer isn't (y/n) [\"y\" or \"n\"]")
+                 
     # Make sure we have some target Externals, downloads latest release for them.
     # For forcing to download the Windows binaries for a release, send os="windows" for overwriting
     # otherwise it'll be set to this class's os.
@@ -423,7 +474,7 @@ f"""{"-"*self.terminal_width}\n
             # # FFmpeg / FFprobe
 
             if external == "ffmpeg":
-                debug_prefix = "[AIOPackageInterface.check_download_externals(ffmpeg)]"
+                debug_prefix = f"[AIOPackageInterface.check_download_externals({external})]"
 
                 # We're on Linux / macOS so checking ffmpeg external dependency on system's path
                 if platform in ["linux", "macos"]:
@@ -435,16 +486,6 @@ f"""{"-"*self.terminal_width}\n
                         sys.exit(-1)
                     continue
     
-                # License of FFmpeg
-                while True:
-                    # Just enable word wrapping for editing this, annoying to type long strings with ("" "" "")
-                    # and this part is not strictly required, just for our safety we suppose
-                    print("\n" + "-" * shutil.get_terminal_size()[0])
-                    u = input("\n We'll download an FFmpeg project [http://ffmpeg.org] pre built binary from the repository [https://github.com/BtbN/FFmpeg-Builds], latest release branch with the GPL license (for some extra components, namely x264), non shared linking and without the hard runtime dependency Vulkan added in the releases tab [https://github.com/BtbN/FFmpeg-Builds/releases].\n\n Please first read the legal terms at [http://ffmpeg.org/legal.html] and the build scripts on BtbN's repository as well as (if you want to) checking where they get and compile the source code from [spoiler: it's from [https://github.com/FFmpeg/FFmpeg] and [https://github.com/FFmpeg/FFmpeg/tree/release/LATEST_RELEASE_NUMBER]].\n\n Be aware that the All in One Video Enhancer project source code is under the MIT license, and that those binaries downloaded to the Externals folder have their own independent from AIO licenses.\n\n :: Type any of (y, yes, ya, ok) to continue (you acknowledge these previous statements though we / you will probably be fine either way): ")
-
-                    if u.lower().replace(" ", "") in ["y", "yes", "ya", "ok"]:
-                        break
-
                 # Get the latest release number of ffmpeg
                 repo = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"
                 logging.info(f"{debug_prefix} Getting latest release info on repository: [{repo}]")
@@ -486,7 +527,14 @@ f"""{"-"*self.terminal_width}\n
                 ffmpeg_zip = self.downloads_dir + f"{sep}{name}"
 
                 # Download FFmpeg build
-                self.download.wget(download_url, ffmpeg_zip, f"FFmpeg v={name}")
+                download_existed = self.download.wget(download_url, ffmpeg_zip, f"FFmpeg v={name}")
+
+                # Verify we don't have an older version extracted..
+                self.verify_external_already_present(
+                    external_name = external,
+                    zipped_download = name,
+                    target_externals_dir = target_externals_dir
+                )
 
                 # Extract the files
                 self.download.extract_zip(ffmpeg_zip, target_externals_dir)
@@ -539,9 +587,17 @@ f"""{"-"*self.terminal_width}\n
                 logging.info(f"{debug_prefix} Download URL: [{download_url}]")
 
                 # Where to download the nihui zip
-                nihui_zip = self.downloads_dir + f"{sep}{name}"
+                nihui_zip = f"{self.downloads_dir}{sep}{name}"
 
                 # Download the zip and extract, nihui already includes a LICENSE file
                 # so we don't have to worry on warning the end user
                 self.download.wget(download_url, nihui_zip, f"nihui: {name}")
+
+                # Verify we don't have an older version extracted..
+                self.verify_external_already_present(
+                    external_name = external,
+                    zipped_download = name,
+                    target_externals_dir = target_externals_dir
+                )
+
                 self.download.extract_zip(nihui_zip, target_externals_dir)

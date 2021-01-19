@@ -20,3 +20,6 @@ src/aio/externals
 # Sessions, runtime
 src/aio/sessions
 src/aio/runtime
+
+# Files starting with triple underline just for quick hiding unused stuff
+___*
