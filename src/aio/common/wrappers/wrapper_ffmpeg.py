@@ -39,7 +39,7 @@
 import aio.common.cmn_any_logger
 import subprocess
 import logging
-
+import os
 
 class FFmpegWrapper:
     def __init__(self, ffmpeg_binary, ffprobe_binary):
@@ -49,3 +49,15 @@ class FFmpegWrapper:
         self.ffprobe_binary = ffprobe_binary
 
         logging.info(f"{debug_prefix} FFmpeg / FFprobe binaries: [{self.ffmpeg_binary}], [{self.ffprobe_binary}]")
+
+    def video_to_frames(self, input_video, target_dir, padded_zeros = 8):
+        debug_prefix = "[FFmpegWrapper.video_to_frames]"
+
+        command = [
+            self.ffmpeg_binary, "-i", input_video,
+            "-q:v", "1", f"{target_dir}{os.path.sep}%0{padded_zeros}d.jpg"
+        ]
+
+        subprocess.run(command)
+
+        print (command)

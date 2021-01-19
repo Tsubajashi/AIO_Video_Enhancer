@@ -51,10 +51,6 @@ class AioVEnhancerContext:
         debug_prefix = "[AioVEnhancerContext.__init__]"
         self.aio_ve_main = aio_ve_main
 
-        # Runtime configuration (input video, output, last profile)
-        self.runtime_file = f"{self.aio_ve_main.top_level_interface.runtime_dir}{os.path.sep}runtime.yaml"
-        self.load_runtime()
-        
     # On the directories.yaml we refer to the directory of the __init__.py with ~~
     # and replace / with the according os.path.sep
     def expand_dir(self, dir_string):
@@ -75,51 +71,11 @@ class AioVEnhancerContext:
 
         return self.aio_ve_main.utils.get_realpath_absolute(dir_string)
 
-    # Load the runtime file (saves last profile, last input / output video configured)
-    # Returns False if no file existed before, True if it existed
-    def load_runtime(self):
-        debug_prefix = "[AioVEnhancerContext.load_runtime]"
-
-        # Did the runtime.yaml file exist? if not create the default and needed values
-        existed = os.path.exists(self.runtime_file)
-        
-        if not existed:
-            logging.info(f"{debug_prefix} Runtime file didn't exist (first time running program?), dumping default configs")
-
-            self.runtime_dict = {
-                "last_profile": "anime",
-                "input_video": "",
-                "output_video": "",
-                "theme": "Dark",
-            }
-
-            self.save_current_runtime()
-        else:
-            logging.info(f"{debug_prefix} Loading runtime.yaml..")
-            self.runtime_dict = self.aio_ve_main.utils.load_yaml(self.runtime_file)
-
-        logging.info(f"{debug_prefix} Loaded runtime.yaml, here's the values we got:")
-
-        for key, value in self.runtime_dict.items():
-            logging.info(f"{debug_prefix} [{key}]: [{value}]")
-
-        return existed
-
-    # Dump current runtime_dict into the runtime.yaml
-    def save_current_runtime(self):
-        debug_prefix = "[AioVEnhancerContext.save_runtime]"
-        # logging.debug(f"{debug_prefix} Dumping current runtime_dict to runtime.yaml")
-        self.aio_ve_main.utils.dump_yaml(self.runtime_dict, self.runtime_file, silent = True)
-
-    # Wrapper for loading the profiled marked on the runtime.yaml config
-    def load_profile_on_runtime_dict(self):
-        self.load_profile(self.runtime_dict["last_profile"] + ".yaml")
-
     # # Profile
 
     # Persistent database file across runs with GUI default configs, settings
     def load_profile(self, name):
-        debug_prefix = "[AioVEnhancerContext.load_database]"
+        debug_prefix = "[AioVEnhancerContext.load_profile]"
 
         logging.debug(f"{debug_prefix} Attempting to load profile with name [{name}]")
         self.current_profile = name
@@ -130,3 +86,30 @@ class AioVEnhancerContext:
         self.profile = self.aio_ve_main.utils.load_yaml(self.profile_yaml_path)
 
         logging.debug(f"{debug_prefix} AioVEnhancerContext.profiles is {self.profile}")
+
+    # Create directories for a session and assigns to this Context's variables
+    def setup_session(self, session_name):
+        debug_prefix = "[AioVEnhancerContext.setup_session]"
+
+        # Assign some shortcuts
+        sessions_dir = self.aio_ve_main.aio_package_interface.sessions_dir
+        self.session_name = session_name
+
+        # Assign the directories
+        self.session_dir =                        f"{sessions_dir}{os.path.sep}{self.session_name}"
+        self.session_input_original_frames =      f"{self.session_dir}{os.path.sep}input_original_frames"
+        self.session_output_upscaled_frames =     f"{self.session_dir}{os.path.sep}session_output_upscaled_frames"
+        self.session_output_interpolated_frames = f"{self.session_dir}{os.path.sep}session_output_interpolated_frames"
+
+        # Remove the session dir if it existed before
+        self.aio_ve_main.utils.rmdir(self.session_dir)
+
+        # Pretty print and make the directories
+        for (key, value) in {
+            "Session directory": self.session_dir,
+            "Session's input original frames": self.session_input_original_frames,
+            "Session's output upscaled frames": self.session_output_upscaled_frames,
+            "Session's output interpolated frames": self.session_output_interpolated_frames,
+        }.items():
+            logging.info(f"{debug_prefix} {value} is [{key}]")
+            self.aio_ve_main.utils.mkdir_dne(value)

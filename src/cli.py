@@ -7,14 +7,27 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 import aio
 interface = aio.AIOPackageInterface()
 
-# Ensure Externals
-want = ["ffmpeg", "waifu2x-ncnn-vulkan", "rife-ncnn-vulkan"]
+# # Ensure Externals
 
-EVERY_PLATFORM_DEBUG = True
+if False:
+    want = ["ffmpeg", "waifu2x-ncnn-vulkan", "rife-ncnn-vulkan"]
 
-if EVERY_PLATFORM_DEBUG:
-    interface.check_download_externals(target_externals = want, platform = "linux")
-    interface.check_download_externals(target_externals = want, platform = "windows")
-    interface.check_download_externals(target_externals = want, platform = "macos")
-else:
-    interface.check_download_externals(target_externals = want)
+    EVERY_PLATFORM_DEBUG = True
+
+    if EVERY_PLATFORM_DEBUG:
+        interface.check_download_externals(target_externals = want, platform = "linux")
+        interface.check_download_externals(target_externals = want, platform = "windows")
+        interface.check_download_externals(target_externals = want, platform = "macos")
+    else:
+        interface.check_download_externals(target_externals = want)
+
+# # Video Enhancer
+
+video_enhancer_interface = interface.get_video_enhancer_interface()
+video_enhancer_interface.setup_session(session_name = "developers_developers_developers")
+
+context = video_enhancer_interface.aio_ve_main.context
+
+ffmpeg = interface.get_ffmpeg_wrapper()
+
+ffmpeg.video_to_frames("yn_moving_480.mkv", context.session_input_original_frames)

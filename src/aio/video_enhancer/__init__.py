@@ -42,12 +42,18 @@ import logging
 
 
 class AioVEInterface:
-    def __init__(self, top_level_interface):
+    def __init__(self, aio_package_interface):
         debug_prefix = "[AioVEInterface.__init__]"
-        self.top_level_interface = top_level_interface
+        self.aio_package_interface = aio_package_interface
 
         # Initialize the Main class
         logging.info(f"{debug_prefix} Initialize AioVEnhancerMain")
         self.aio_ve_main = AioVEnhancerMain(aiove_interface = self)
 
+    # Create and setup internally an new session
+    def setup_session(self, session_name):
+        debug_prefix = "[AioVEInterface.setup_session]"
 
+        logging.info(f"{debug_prefix} Create session with name [{session_name}]")
+        self.aio_ve_main.context.setup_session(session_name = session_name)
+        

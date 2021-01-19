@@ -125,7 +125,7 @@ f"""{"-"*self.terminal_width}\n
         logging.info(f"{debug_prefix} Return VEInterface")
         
         from aio.video_enhancer import AioVEInterface
-        return AioVEInterface(top_level_interface = self)
+        return AioVEInterface(aio_package_interface = self)
 
     # Return one (usually required) setting up encoder
     def get_ffmpeg_wrapper(self):
@@ -327,20 +327,18 @@ f"""{"-"*self.terminal_width}\n
         logging.info(f"{debug_prefix} Externals directory for Darwin OS (macOS) is [{self.externals_dir_macos}]")
         self.utils.mkdir_dne(path = self.externals_dir_macos, silent = True)
 
+        # # This native platform externals dir
+        self.externals_dir_this_platform = self.__get_platform_external_dir(self.os)
+        logging.info(f"{debug_prefix} This platform externals directory is: [{self.externals_dir_this_platform}]")
+        
         # When using some function like Utils.get_executable_with_name, it have an argument
         # called extra_paths, add this for searching for the full externals directory.
         # Preferably use this interface methods like find_binary instead
         self.EXTERNALS_SEARCH_PATH = [
             self.externals_dir,
-            self.externals_dir_linux,
-            self.externals_dir_windows,
-            self.externals_dir_macos,
+            self.externals_dir_this_platform,
         ]
 
-        # # This native platform externals dir
-        self.externals_dir_this_platform = self.__get_platform_external_dir(self.os)
-        logging.info(f"{debug_prefix} This platform externals directory is: [{self.externals_dir_this_platform}]")
-        
         # Code flow management
         if self.prelude["flow"]["stop_at_initialization"]:
             logging.critical(f"{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
@@ -414,9 +412,12 @@ f"""{"-"*self.terminal_width}\n
                     
                     # Ask the user to enter y or n for deleting or not the 
                     while True:
-                        uinput = input(f"\nA new version of the external [{external_name}] was downloaded and extracted, delete the old one at [{full_path}] ? New one is [{extracted_external_folder_name}] (y/n): ")
-
-                        uinput = uinput.lower()
+                        # Don't confirm with the user to delete old directories of externals
+                        if self.prelude["externals"]["dont_confirm_before_deleting_old_version"]:
+                            uinput = "y"
+                        else:
+                            uinput = input(f"\nA new version of the external [{external_name}] was downloaded and extracted, delete the old one at [{full_path}] ? New one is [{extracted_external_folder_name}] (y/n): ")
+                            uinput = uinput.lower()
 
                         if uinput == "y":
                             self.utils.rmdir(path = full_path)

@@ -5,6 +5,7 @@ log_format = "pretty"  # informational, pretty, economic, onlymessage
 
 [externals]
 dont_verify_delete_old_versions = false
+dont_confirm_before_deleting_old_version = true
 
 [flow]
 stop_at_initialization = false

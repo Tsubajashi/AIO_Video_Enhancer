@@ -50,10 +50,10 @@ class AioVEnhancerMain:
     def __init__(self, aiove_interface):
         debug_prefix = "[AioVEnhancerMain.__init__]"
         self.aiove_interface = aiove_interface
-        self.top_level_interface = self.aiove_interface.top_level_interface
+        self.aio_package_interface = self.aiove_interface.aio_package_interface
 
         logging.info(f"{debug_prefix} Assigning Utils")
-        self.utils = self.top_level_interface.utils
+        self.utils = self.aio_package_interface.utils
 
         # Runtime / configs / communicator across files
         logging.info(f"{debug_prefix} Creating AioVEnhancerContext")
