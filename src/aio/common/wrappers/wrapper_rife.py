@@ -8,7 +8,7 @@
 #
 # ==============================================================================
 #
-#   Purpose: FFmpeg wrapper
+#   Purpose: nihui's Rife NCNN Vulkan wrapper
 #
 # ==============================================================================
 #
@@ -39,25 +39,48 @@
 import aio.common.cmn_any_logger
 import subprocess
 import logging
+import sys
 import os
 
-class FFmpegWrapper:
-    def __init__(self, ffmpeg_binary, ffprobe_binary):
-        debug_prefix = "[FFmpegWrapper.__init__]"
+class RifeWrapper:
+    def __init__(self, rife_binary):
+        debug_prefix = "[RifeWrapper.__init__]"
         
-        self.ffmpeg_binary = ffmpeg_binary
-        self.ffprobe_binary = ffprobe_binary
+        self.rife_binary = rife_binary
 
-        logging.info(f"{debug_prefix} FFmpeg / FFprobe binaries: [{self.ffmpeg_binary}], [{self.ffprobe_binary}]")
+        logging.info(f"{debug_prefix} Rife binary is: [{self.rife_binary}]")
 
-    def video_to_frames(self, input_video, target_dir, padded_zeros = 8):
-        debug_prefix = "[FFmpegWrapper.video_to_frames]"
+    # Execute rife binary with some of its settings
+    def execute(self, i, o, g = 0, j = "4:4:4", m: str = None, x = False, u = False):
+        debug_prefix = "[RifeWrapper.video_to_frames]"
 
-        # Build the command
-        command = [
-            self.ffmpeg_binary, "-i", input_video,
-            "-q:v", "1", f"{target_dir}{os.path.sep}%0{padded_zeros}d.jpg"
-        ]
+        # Build the (basic) command, without models or optional arguments
+        command = [self.rife_binary, "-i", i, "-o", o, "-g", str(g), "-j", j]
+
+        # # Optional / extra arguments
+
+        # nihui includes models under the extracted folder so we specify 
+        if m is not None:
+            sep = os.path.sep
+
+            # Get the parent directory of the rife binary
+            rife_directory = sep.join(self.rife_binary.split(sep)[:-1])
+
+            # The theoretical model path given by the user
+            model_path = f"{rife_directory}{sep}{m}"
+            
+            # Error assertion, invalid model path built
+            if not os.path.exists(model_path):
+                logging.error(f"{debug_prefix} Given model [{m}] does not have model path directory in [{model_path}]")
+                sys.exit(-1)
+
+        # Enable tta mode
+        if x:
+            command.append("-x")
+
+        # Enable UHD mode
+        if u:
+            command.append("-u")
 
         # Log action
         logging.info(f"{debug_prefix} Running command for extracting video to frames: {command}")

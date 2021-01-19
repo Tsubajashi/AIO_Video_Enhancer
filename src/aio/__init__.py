@@ -38,6 +38,8 @@
 # ==============================================================================
 
 from aio.common.wrappers.wrapper_ffmpeg import FFmpegWrapper
+from aio.common.wrappers.wrapper_rife import RifeWrapper
+from aio.video_enhancer import AioVEInterface
 from aio.common.cmn_download import Download
 from aio.common.cmn_utils import Utils
 import subprocess
@@ -121,21 +123,24 @@ f"""{"-"*self.terminal_width}\n
     # Return the subpackage "video_enhancer" interface class
     def get_video_enhancer_interface(self):
         debug_prefix = "[AIOPackageInterface.get_video_enhancer_interface]"
-
         logging.info(f"{debug_prefix} Return VEInterface")
-        
-        from aio.video_enhancer import AioVEInterface
         return AioVEInterface(aio_package_interface = self)
 
     # Return one (usually required) setting up encoder
     def get_ffmpeg_wrapper(self):
         debug_prefix = "[AIOPackageInterface.get_ffmpeg_wrapper]"
-
         logging.info(f"{debug_prefix} Return FFmpegWrapper")
-        
         return FFmpegWrapper(
             ffmpeg_binary = self.find_binary("ffmpeg"),
             ffprobe_binary = self.find_binary("ffprobe")
+        )
+    
+    # Return one (usually required) setting up encoder
+    def get_rife_wrapper(self):
+        debug_prefix = "[AIOPackageInterface.get_rife_wrapper]"
+        logging.info(f"{debug_prefix} Return RifeWrapper")
+        return RifeWrapper(
+            rife_binary = self.find_binary("rife-ncnn-vulkan"),
         )
 
     # Main interface class, mainly sets up root dirs, get config, distributes classes
@@ -327,23 +332,34 @@ f"""{"-"*self.terminal_width}\n
         logging.info(f"{debug_prefix} Externals directory for Darwin OS (macOS) is [{self.externals_dir_macos}]")
         self.utils.mkdir_dne(path = self.externals_dir_macos, silent = True)
 
-        # # This native platform externals dir
-        self.externals_dir_this_platform = self.__get_platform_external_dir(self.os)
-        logging.info(f"{debug_prefix} This platform externals directory is: [{self.externals_dir_this_platform}]")
-        
-        # When using some function like Utils.get_executable_with_name, it have an argument
-        # called extra_paths, add this for searching for the full externals directory.
-        # Preferably use this interface methods like find_binary instead
-        self.EXTERNALS_SEARCH_PATH = [
-            self.externals_dir,
-            self.externals_dir_this_platform,
-        ]
+        self.__update_externals_search_path()
 
         # Code flow management
         if self.prelude["flow"]["stop_at_initialization"]:
             logging.critical(f"{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
             sys.exit(0)
     
+    # Internally update the search path for finding externals
+    def __update_externals_search_path(self):
+        debug_prefix = "[AIOPackageInterface.__update_externals_search_path]"
+
+        # # This native platform externals dir
+        self.externals_dir_this_platform = self.__get_platform_external_dir(self.os)
+        logging.info(f"{debug_prefix} This platform externals directory is: [{self.externals_dir_this_platform}]")
+        
+        # Get a list of recursive directories
+        recursive_directories = []
+        for path in os.listdir(self.externals_dir_this_platform):
+            recursive_directories.append(f"{self.externals_dir_this_platform}{os.path.sep}{path}")
+
+        # When using some function like Utils.get_executable_with_name, it have an argument
+        # called extra_paths, add this for searching for the full externals directory.
+        # Preferably use this interface methods like find_binary instead
+        self.EXTERNALS_SEARCH_PATH = [
+            self.externals_dir,
+            self.externals_dir_this_platform,
+        ] + recursive_directories
+
     # Get the target externals dir for this platform
     def __get_platform_external_dir(self, platform):
         debug_prefix = "[AIOPackageInterface.__get_platform_external_dir]"

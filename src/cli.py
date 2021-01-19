@@ -29,5 +29,13 @@ video_enhancer_interface.setup_session(session_name = "developers_developers_dev
 context = video_enhancer_interface.aio_ve_main.context
 
 ffmpeg = interface.get_ffmpeg_wrapper()
-
 ffmpeg.video_to_frames("yn_moving_480.mkv", context.session_input_original_frames)
+
+rife = interface.get_rife_wrapper()
+rife.execute(
+    i = context.session_input_original_frames,
+    o = context.session_output_interpolated_frames,
+    x = False,  # Enable tta mode NOTE: SLOW
+    u = False,  # Enable UHD mode
+    m = "rife-UHD"  # Can be ["rife", "rife-anime", "rife-HD", "rife-UHD"]
+)
