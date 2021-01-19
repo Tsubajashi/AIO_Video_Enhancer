@@ -8,7 +8,7 @@
 #
 # ==============================================================================
 #
-#   Purpose: nihui's Rife NCNN Vulkan wrapper
+#   Purpose: nihui's Waifu2x NCNN Vulkan wrapper
 #
 # ==============================================================================
 #
@@ -43,20 +43,26 @@ import sys
 import os
 
 
-class RifeWrapper:
-    def __init__(self, rife_binary):
-        debug_prefix = "[RifeWrapper.__init__]"
+class Waifu2xVulkanWrapper:
+    def __init__(self, waifu2x_binary):
+        debug_prefix = "[Waifu2xVulkanWrapper.__init__]"
         
-        self.rife_binary = rife_binary
+        self.waifu2x_binary = waifu2x_binary
 
-        logging.info(f"{debug_prefix} Rife binary is: [{self.rife_binary}]")
+        logging.info(f"{debug_prefix} Waifu2x Vulkan binary is: [{self.waifu2x_binary}]")
 
     # Execute rife binary with some of its settings
-    def execute(self, src, dst, gpu_id = 0, load_proc_save = "4:4:4", model: str = None, tta = False, uhd = False):
-        debug_prefix = "[RifeWrapper.video_to_frames]"
+    def execute(self, src, dst, noise_level, gpu_id = None, load_proc_save = "2:2:2", model: str = None, tta = False, tile_size = 0, oformat = "png"):
+        debug_prefix = "[Waifu2xVulkanWrapper.video_to_frames]"
 
         # Build the (basic) command, without models or optional arguments
-        command = [self.rife_binary, "-i", src, "-o", dst, "-g", str(gpu_id), "-j", load_proc_save]
+        command = [
+            self.waifu2x_binary, "-i", src, "-o", dst, "-n", str(int(noise_level)),
+            "-j", load_proc_save, "-t", str(int(tile_size)), "-f", oformat
+        ]
+
+        if gpu_id is not None:
+            command += ["-g", str(gpu_id)]
 
         # # Optional / extra arguments
 
@@ -66,30 +72,26 @@ class RifeWrapper:
 
             # User already pointed some directory
             if not os.path.isdir(model):
-
+                    
                 # Get the parent directory of the rife binary
-                rife_directory = sep.join(self.rife_binary.split(sep)[:-1])
+                waifu2x_directory = sep.join(self.waifu2x_binary.split(sep)[:-1])
 
                 # The theoretical model path given by the user
-                model_path = f"{rife_directory}{sep}{model}"
+                model_path = f"{waifu2x_directory}{sep}{model}"
                 
                 # Error assertion, invalid model path built
                 if not os.path.exists(model_path):
                     logging.error(f"{debug_prefix} Given model [{model}] does not have model path directory in [{model_path}]")
                     sys.exit(-1)
-
+            
             command += ["-m", model_path]
 
         # Enable tta mode
         if tta:
             command.append("-x")
 
-        # Enable UHD mode
-        if uhd:
-            command.append("-u")
-
         # Log action
-        logging.info(f"{debug_prefix} Running command for Rife interpolation: {command}")
+        logging.info(f"{debug_prefix} Running command for Waifu2x upscaling: {command}")
 
         # Run command...
         subprocess.run(command)

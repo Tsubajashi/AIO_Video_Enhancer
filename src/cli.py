@@ -12,7 +12,7 @@ interface = aio.AIOPackageInterface()
 if False:
     want = ["ffmpeg", "waifu2x-ncnn-vulkan", "rife-ncnn-vulkan"]
 
-    EVERY_PLATFORM_DEBUG = True
+    EVERY_PLATFORM_DEBUG = False
 
     if EVERY_PLATFORM_DEBUG:
         interface.check_download_externals(target_externals = want, platform = "linux")
@@ -33,9 +33,19 @@ ffmpeg.video_to_frames("yn_moving_480.mkv", context.session_input_original_frame
 
 rife = interface.get_rife_wrapper()
 rife.execute(
-    i = context.session_input_original_frames,
-    o = context.session_output_interpolated_frames,
-    x = False,  # Enable tta mode NOTE: SLOW
-    u = False,  # Enable UHD mode
-    m = "rife-UHD"  # Can be ["rife", "rife-anime", "rife-HD", "rife-UHD"]
+    src = context.session_input_original_frames,
+    dst = context.session_output_upscaled_frames,
+    model = "rife-UHD",  # Can be ["rife", "rife-anime", "rife-HD", "rife-UHD"]
+    tta = False,  # Enable tta mode NOTE: SLOW
+    uhd = False,  # Enable UHD mode
+)
+
+waifu2x = interface.get_waifu2x_wrapper()
+waifu2x.execute(
+    src = context.session_output_upscaled_frames,
+    dst = context.session_output_interpolated_frames,
+    noise_level = 3,
+    tile_size = 200,
+    load_proc_save = "4:4:4",
+    model = "models-cunet",  # Can be ["models-cunet", "models-upconv_7_anime_style_art_rgb", "models-upconv_7_photo"]
 )

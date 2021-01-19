@@ -177,7 +177,7 @@ class Utils:
 
         # Force list variable
         extra_paths = self.force_list(extra_paths)
-        search_path = os.environ["PATH"] + os.pathsep + os.pathsep.join(extra_paths)
+        search_path =  os.pathsep.join(extra_paths) + os.pathsep + os.environ["PATH"]
 
         # Log search paths
         if not silent:

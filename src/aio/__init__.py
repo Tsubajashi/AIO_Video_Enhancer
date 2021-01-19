@@ -37,6 +37,7 @@
 #
 # ==============================================================================
 
+from aio.common.wrappers.wrapper_waifu2x_vulkan import Waifu2xVulkanWrapper
 from aio.common.wrappers.wrapper_ffmpeg import FFmpegWrapper
 from aio.common.wrappers.wrapper_rife import RifeWrapper
 from aio.video_enhancer import AioVEInterface
@@ -135,12 +136,20 @@ f"""{"-"*self.terminal_width}\n
             ffprobe_binary = self.find_binary("ffprobe")
         )
     
-    # Return one (usually required) setting up encoder
+    # Return Rife wrapper for interpolation
     def get_rife_wrapper(self):
         debug_prefix = "[AIOPackageInterface.get_rife_wrapper]"
         logging.info(f"{debug_prefix} Return RifeWrapper")
         return RifeWrapper(
             rife_binary = self.find_binary("rife-ncnn-vulkan"),
+        )
+    
+    # Return Waifu2x wrapper for upscaling
+    def get_waifu2x_wrapper(self):
+        debug_prefix = "[AIOPackageInterface.get_waifu2x_wrapper]"
+        logging.info(f"{debug_prefix} Return Waifu2xVulkanWrapper")
+        return Waifu2xVulkanWrapper(
+            waifu2x_binary = self.find_binary("waifu2x-ncnn-vulkan"),
         )
 
     # Main interface class, mainly sets up root dirs, get config, distributes classes
@@ -618,3 +627,11 @@ f"""{"-"*self.terminal_width}\n
                 )
 
                 self.download.extract_zip(nihui_zip, target_externals_dir)
+
+                # Mark as executable the extracted binary
+                if platform in ["linux", "macos"]:
+                    for name in os.listdir(target_externals_dir):
+                        if external in name:
+                            c = f"chmod +x \"{target_externals_dir}{sep}{name}{sep}{external}\""
+                            logging.info(f"{debug_prefix} Marking extracted external as executable: [{c}]")
+                            os.system(c)
