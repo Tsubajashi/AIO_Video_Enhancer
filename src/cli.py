@@ -31,9 +31,12 @@ context = video_enhancer_interface.aio_ve_main.context
 v = "yn_moving_480.mkv"
 
 ffmpeg = interface.get_ffmpeg_wrapper()
-ffmpeg.get_video_frame_count(v)
-exit()
 ffmpeg.video_to_frames(v, context.session_input_original_frames)
+info = ffmpeg.get_video_info(v)
+
+assert info["frame_count"] == len(os.listdir(context.session_input_original_frames))
+
+exit()
 
 rife = interface.get_rife_wrapper()
 rife.execute(
