@@ -28,8 +28,12 @@ video_enhancer_interface.setup_session(session_name = "developers_developers_dev
 
 context = video_enhancer_interface.aio_ve_main.context
 
+v = "yn_moving_480.mkv"
+
 ffmpeg = interface.get_ffmpeg_wrapper()
-ffmpeg.video_to_frames("yn_moving_480.mkv", context.session_input_original_frames)
+ffmpeg.get_video_frame_count(v)
+exit()
+ffmpeg.video_to_frames(v, context.session_input_original_frames)
 
 rife = interface.get_rife_wrapper()
 rife.execute(
