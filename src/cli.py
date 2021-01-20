@@ -94,7 +94,7 @@ rife = interface.get_rife_wrapper()
 rife.execute(
     src = context.session_input_original_frames,
     dst = context.session_output_interpolated_frames,
-    model = "rife-UHD",  # Can be ["rife", "rife-anime", "rife-HD", "rife-UHD"]
+    model = "rife-anime",  # Can be ["rife", "rife-anime", "rife-HD", "rife-UHD"]
     oformat = process_images_in_format,
     tta = False,  # Enable tta mode NOTE: SLOW
     uhd = False,  # Enable UHD mode

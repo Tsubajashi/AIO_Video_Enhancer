@@ -74,6 +74,7 @@ class FFmpegWrapper:
             original_video_map_audio,
             output_video,
             fps, width, height,
+            crf = 18,
             override = True,
             padded_zeros = 8, **kwargs):
         debug_prefix = "[FFmpegWrapper.video_to_frames]"
@@ -85,7 +86,9 @@ class FFmpegWrapper:
             "-i", f"{input_frames_dir}{os.path.sep}%0{padded_zeros}d.{frames_externsion}",
             "-i", f"{original_video_map_audio}",
             "-map", "0:v", "-map", "1:a",
-            "-c:v", "libx264", "-vf", f"fps={fps},scale={width}x{height}", output_video
+            "-c:v", "libx264", "-vf", f"fps={fps},scale={width}x{height}",
+            "-crf", f"{crf}",
+            output_video
         ]
 
         if override:
