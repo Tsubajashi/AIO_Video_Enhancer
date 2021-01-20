@@ -52,11 +52,11 @@ class RifeWrapper:
         logging.info(f"{debug_prefix} Rife binary is: [{self.rife_binary}]")
 
     # Execute rife binary with some of its settings
-    def execute(self, src, dst, gpu_id = 0, load_proc_save = "4:4:4", model: str = None, tta = False, uhd = False):
+    def execute(self, src, dst, gpu_id = 0, load_proc_save = "4:4:4", model: str = None, tta = False, uhd = False, oformat = "png"):
         debug_prefix = "[RifeWrapper.video_to_frames]"
 
         # Build the (basic) command, without models or optional arguments
-        command = [self.rife_binary, "-i", src, "-o", dst, "-g", str(gpu_id), "-j", load_proc_save]
+        command = [self.rife_binary, "-i", src, "-o", dst, "-g", str(gpu_id), "-j", load_proc_save, "-f", oformat]
 
         # # Optional / extra arguments
 

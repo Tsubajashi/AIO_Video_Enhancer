@@ -42,6 +42,7 @@ import logging
 import re
 import os
 
+
 class FFmpegWrapper:
     def __init__(self, ffmpeg_binary, ffprobe_binary):
         debug_prefix = "[FFmpegWrapper.__init__]"
@@ -52,14 +53,14 @@ class FFmpegWrapper:
         logging.info(f"{debug_prefix} FFmpeg / FFprobe binaries: [{self.ffmpeg_binary}], [{self.ffprobe_binary}]")
 
     # Converts a video to images
-    def video_to_frames(self, input_video, target_dir, padded_zeros = 8):
+    def video_to_frames(self, input_video, target_dir, frame_extension = "jpg", padded_zeros = 8):
         debug_prefix = "[FFmpegWrapper.video_to_frames]"
 
         # Build the command
         command = [
             self.ffmpeg_binary, "-i", input_video,
             "-vsync", "vfr",  # Mitigation on variable frame rate
-            "-q:v", "1", f"{target_dir}{os.path.sep}%0{padded_zeros}d.jpg"
+            "-q:v", "1", f"{target_dir}{os.path.sep}%0{padded_zeros}d.{frame_extension}"
         ]
 
         # Log action
@@ -68,10 +69,39 @@ class FFmpegWrapper:
         # Run command...
         subprocess.run(command)
     
+    def frames_to_video(self,
+            input_frames_dir, frames_externsion,
+            original_video_map_audio,
+            output_video,
+            fps, width, height,
+            pix_fmt = "yuv420p",
+            override = True,
+            padded_zeros = 8, **kwargs):
+        debug_prefix = "[FFmpegWrapper.video_to_frames]"
+
+        # Build the command
+        command = [
+            self.ffmpeg_binary,
+            "-r", f"{fps}",
+            "-i", f"{input_frames_dir}{os.path.sep}%0{padded_zeros}d.{frames_externsion}",
+            "-i", f"{original_video_map_audio}",
+            "-map", "0:v", "-map", "1:a",
+            "-c:v", "libx264", "-vf", f"fps={fps},scale={width}x{height}", "-pix_fmt", pix_fmt, output_video
+        ]
+
+        if override:
+            command.append("-y")
+
+        # Log action
+        logging.info(f"{debug_prefix} Running command for converting images -> video also map original audio streams [{command}]")
+
+        # Run command...
+        subprocess.run(command)
+    
     # # Video info
 
     # Returns a dictionary with some info of the video
-    # keys: frame_count, duration (seconds), frame_rate, width, height
+    # keys: frame_count, duration (seconds), fps, width, height
     def get_video_info(self, target_video):
         debug_prefix = "[FFmpegWrapper.get_video_info]"
 
@@ -87,8 +117,8 @@ class FFmpegWrapper:
         # Build the info dictionary also call some other specific functions
         info = {
             "frame_count": frame_count_and_duration["frame_count"],
-            "duration": frame_count_and_duration["duration"],
-            "frame_rate": self.get_video_frame_rate(of_video = target_video),
+            "duration": frame_count_and_duration["duration"],  # Duration probably won't be required but it's a free bonus
+            "fps": self.get_video_frame_rate(of_video = target_video),
             "width": resolution[0],
             "height": resolution[1],
         }
