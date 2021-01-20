@@ -74,7 +74,6 @@ class FFmpegWrapper:
             original_video_map_audio,
             output_video,
             fps, width, height,
-            pix_fmt = "yuv420p",
             override = True,
             padded_zeros = 8, **kwargs):
         debug_prefix = "[FFmpegWrapper.video_to_frames]"
@@ -86,7 +85,7 @@ class FFmpegWrapper:
             "-i", f"{input_frames_dir}{os.path.sep}%0{padded_zeros}d.{frames_externsion}",
             "-i", f"{original_video_map_audio}",
             "-map", "0:v", "-map", "1:a",
-            "-c:v", "libx264", "-vf", f"fps={fps},scale={width}x{height}", "-pix_fmt", pix_fmt, output_video
+            "-c:v", "libx264", "-vf", f"fps={fps},scale={width}x{height}", output_video
         ]
 
         if override:
@@ -152,7 +151,7 @@ class FFmpegWrapper:
         logging.info(f"{debug_prefix} - Width:  [{width}]")
         logging.info(f"{debug_prefix} - Height: [{height}]")
 
-        return [width, height]
+        return [int(width), int(height)]
 
     # Attempt to get the frame count and duration, uses -vsync cfr for constant frame rate
     # Variable frame rate (VFR) is quite annoying to deal with and probably won't be as compatible

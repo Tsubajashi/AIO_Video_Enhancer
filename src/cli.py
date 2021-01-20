@@ -132,6 +132,6 @@ ffmpeg.frames_to_video(
     original_video_map_audio = input_video,
     output_video = "rife-waifu2x.mkv",
     fps = double_fps,
-    width = info["width"],
-    height = info["height"],
+    width = 2 * info["width"],  # These were upscaled by a factor of 2x
+    height = 2 * info["height"],
 )

@@ -97,9 +97,9 @@ class AioVEnhancerContext:
 
         # Assign the directories
         self.session_dir =                        f"{sessions_dir}{os.path.sep}{self.session_name}"
-        self.session_input_original_frames =      f"{self.session_dir}{os.path.sep}input_original_frames"
-        self.session_output_upscaled_frames =     f"{self.session_dir}{os.path.sep}session_output_upscaled_frames"
-        self.session_output_interpolated_frames = f"{self.session_dir}{os.path.sep}session_output_interpolated_frames"
+        self.session_input_original_frames =      f"{self.session_dir}{os.path.sep}in_original_frames"
+        self.session_output_upscaled_frames =     f"{self.session_dir}{os.path.sep}out_upscaled_frames"
+        self.session_output_interpolated_frames = f"{self.session_dir}{os.path.sep}out_interpolated_frames"
 
         # Remove the session dir if it existed before
         self.aio_ve_main.utils.rmdir(self.session_dir)
